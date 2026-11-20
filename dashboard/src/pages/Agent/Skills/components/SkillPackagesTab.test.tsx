@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 
 vi.mock("../../../../api/modules/skillPackages", () => ({
   skillPackagesApi: {
@@ -25,21 +26,6 @@ vi.mock("../../../../utils/showApiToast", () => ({ showApiError: vi.fn() }));
 vi.mock("@/utils/antdMessage", () => ({
   message: { success: vi.fn(), warning: vi.fn(), error: vi.fn() },
 }));
-
-// The shared setup builds a fresh ``t`` on every ``useTranslation`` call, which
-// re-runs this component's ``useEffect([agentId, t])`` after each render and
-// leaves the tree flipping between the spinner and the catalog. Pin one stable
-// ``t`` so a click lands on a node that stays mounted.
-vi.mock("react-i18next", () => {
-  const t = (key: string) => key;
-  return {
-    useTranslation: () => ({
-      t,
-      i18n: { language: "zh", changeLanguage: () => Promise.resolve() },
-    }),
-    Trans: ({ children }: { children?: unknown }) => children,
-  };
-});
 
 import { skillPackagesApi } from "../../../../api/modules/skillPackages";
 import type {
@@ -95,6 +81,7 @@ function renderTab() {
       fetchSkills={vi.fn().mockResolvedValue(undefined)}
       toggleEnabled={vi.fn().mockResolvedValue(true)}
     />,
+    { wrapper: MemoryRouter },
   );
 }
 

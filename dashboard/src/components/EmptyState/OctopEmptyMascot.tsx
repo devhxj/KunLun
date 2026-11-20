@@ -1,6 +1,6 @@
 import cx from "classnames";
 
-import { OCTOP_EMPTY_MASCOT_SRC } from "../../assets/mascot";
+import KunlunMascot from "../KunlunMascot";
 import styles from "./EmptyState.module.less";
 
 interface OctopEmptyMascotProps {
@@ -10,7 +10,7 @@ interface OctopEmptyMascotProps {
 }
 
 /**
- * Octop empty-state mascot image with shared sizing.
+ * Empty-state mascot image with shared sizing.
  * Use inside custom empty UIs or pass as ``EmptyState`` icon /
  * antd ``Empty`` ``image``.
  */
@@ -19,10 +19,7 @@ export function OctopEmptyMascot({
   size = 160,
 }: OctopEmptyMascotProps) {
   return (
-    <img
-      src={OCTOP_EMPTY_MASCOT_SRC}
-      alt=""
-      draggable={false}
+    <KunlunMascot
       className={cx(styles.mascot, className)}
       style={size === 160 ? undefined : { width: size, height: size }}
     />

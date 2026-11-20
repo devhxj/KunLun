@@ -1,0 +1,52 @@
+CREATE TABLE IF NOT EXISTS user_departments (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  department_id TEXT NOT NULL REFERENCES departments(department_id) ON DELETE CASCADE,
+  UNIQUE (user_id, department_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_departments_user ON user_departments(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_departments_dept ON user_departments(department_id);
+
+CREATE TABLE IF NOT EXISTS amoeba_metrics (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  metric_key TEXT NOT NULL UNIQUE,
+  name_zh    TEXT NOT NULL,
+  name_en    TEXT NOT NULL,
+  unit       TEXT NOT NULL DEFAULT '',
+  category   TEXT NOT NULL,
+  formula    TEXT NOT NULL DEFAULT '',
+  note_zh    TEXT NOT NULL DEFAULT '',
+  note_en    TEXT NOT NULL DEFAULT '',
+  format     TEXT NOT NULL DEFAULT 'number',
+  color      TEXT NOT NULL DEFAULT '',
+  sort       INTEGER NOT NULL DEFAULT 0,
+  enabled    INTEGER NOT NULL DEFAULT 1,
+  builtin    INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_amoeba_metrics_category ON amoeba_metrics(category, sort);
+
+CREATE TABLE IF NOT EXISTS amoeba_snapshots (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  department_id TEXT NOT NULL REFERENCES departments(department_id) ON DELETE CASCADE,
+  stat_date     TEXT NOT NULL,
+  metric_key    TEXT NOT NULL,
+  value         REAL NOT NULL,
+  UNIQUE (department_id, stat_date, metric_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_amoeba_snapshots_metric ON amoeba_snapshots(metric_key, stat_date);
+
+CREATE TABLE IF NOT EXISTS amoeba_budgets (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  department_id TEXT NOT NULL REFERENCES departments(department_id) ON DELETE CASCADE,
+  period        TEXT NOT NULL,
+  metric_key    TEXT NOT NULL,
+  value         REAL NOT NULL,
+  UNIQUE (department_id, period, metric_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_amoeba_budgets_metric ON amoeba_budgets(metric_key, period);
+
+UPDATE _schema_version SET version = 28;

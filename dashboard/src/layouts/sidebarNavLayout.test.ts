@@ -39,6 +39,7 @@ describe("sidebarNavLayout", () => {
       "experts",
       "tasks",
       "token-usage",
+      "amoeba",
     ]);
     expect(editor.groups.map((group) => group.id)).toEqual([
       "settings",
@@ -141,7 +142,7 @@ describe("sidebarNavLayout", () => {
     expect(shown).not.toContain("personalization");
     expect(
       visibleEditorGroups(editor, sections).map((group) => group.id),
-    ).toEqual(["settings", "c_aabbccdd"]);
+    ).toEqual(["c_aabbccdd"]);
   });
 
   it("keeps a new empty group only in the editor", () => {

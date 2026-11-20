@@ -26,6 +26,7 @@ SIDEBAR_NAV_KEYS = frozenset(
         "experts",
         "tasks",
         "token-usage",
+        "amoeba",
         "personalization",
         "channels",
         "connectors",

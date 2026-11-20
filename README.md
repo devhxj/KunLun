@@ -268,9 +268,11 @@ octop run
 # Custom host / port
 octop run --host 0.0.0.0 --port 8088
 
-# Register as a system service (systemd / launchd / Windows service)
+# Register as a system service on Linux (systemd) or macOS (launchd)
 octop service start
 ```
+
+On Windows, use Servy to run Octop as a service and start it at boot. [Windows service setup (Chinese)](docs/user-guide.md#使用-servy-配置-windows-服务)
 
 Open **http://127.0.0.1:8088**. With Docker, a valid `OCTOP_DEFAULT_PASSWORD` creates the admin on first boot (credentials in `/data/.octop/credential.txt`); if it is unset or rejected, open the setup wizard (unlock password in `/data/.octop/octop-login.txt`). Interactive `octop init` / the setup wizard asks you to choose a password (≥8 characters, letters and digits).
 
@@ -422,8 +424,8 @@ Full catalog, auth kinds, and MCP modes: **[docs/connectors.md](docs/connectors.
 |---------|-------------|
 | `octop init` | Bootstrap `~/.octop/` (DB, admin, JWT secret) |
 | `octop run` | Start Octop in the foreground |
-| `octop service start` | Install and start as a system service |
-| `octop service stop` | Stop the system service |
+| `octop service start` | Install and start as a system service (Linux / macOS) |
+| `octop service stop` | Stop the system service (Linux / macOS) |
 | `octop agent` | Create, list, start/stop agents |
 | `octop channel` | Install and manage IM channels |
 | `octop chats` | REPL and session management |
@@ -565,6 +567,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide. Security issues: [SEC
 Module boundaries and coding conventions: [AGENTS.md](AGENTS.md).
 
 ## 📋 Changelog
+
+The latest changes add the Amoeba operations dashboard and department management, update the web console to KunLun branding, and document Windows service setup with Servy.
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
 

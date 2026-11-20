@@ -13,6 +13,7 @@ from octop.infra.crypto.sealed_repos import (
 )
 from octop.infra.db.pool import DatabasePool
 from octop.infra.db.repos.agents import AgentRepo
+from octop.infra.db.repos.amoeba import AmoebaRepo
 from octop.infra.db.repos.audit import AuditRepo
 from octop.infra.db.repos.auth_challenges import AuthChallengeRepo
 from octop.infra.db.repos.backends import BackendRepo
@@ -22,6 +23,7 @@ from octop.infra.db.repos.channels import ChannelRepo
 from octop.infra.db.repos.connectors import ConnectorRepo
 from octop.infra.db.repos.control_files import ControlFileRepo
 from octop.infra.db.repos.cron import CronJobRepo
+from octop.infra.db.repos.departments import DepartmentRepo
 from octop.infra.db.repos.invites import InviteRepo
 from octop.infra.db.repos.knowledge import KnowledgeRepo
 from octop.infra.db.repos.proactive_care_config import ProactiveCareConfigRepo
@@ -79,6 +81,7 @@ class RepoBundle:
     proactive_care_config_repo: ProactiveCareConfigRepo
     sso_repo: SsoRepo
     user_group_repo: UserGroupRepo
+    department_repo: DepartmentRepo
     user_group_member_repo: UserGroupMemberRepo
     resource_group_grant_repo: ResourceGroupGrantRepo
     user_totp_repo: UserTotpRepo
@@ -87,6 +90,7 @@ class RepoBundle:
     auth_challenge_repo: AuthChallengeRepo
     profile_avatar_repo: ProfileAvatarRepo
     control_file_repo: ControlFileRepo
+    amoeba_repo: AmoebaRepo
 
     @classmethod
     def from_pool(cls, db: DatabasePool) -> RepoBundle:
@@ -119,6 +123,7 @@ class RepoBundle:
             proactive_care_config_repo=ProactiveCareConfigRepo(db),
             sso_repo=SsoRepo(db),
             user_group_repo=UserGroupRepo(db),
+            department_repo=DepartmentRepo(db),
             user_group_member_repo=UserGroupMemberRepo(db),
             resource_group_grant_repo=ResourceGroupGrantRepo(db),
             user_totp_repo=UserTotpRepo(db),
@@ -127,6 +132,7 @@ class RepoBundle:
             auth_challenge_repo=AuthChallengeRepo(db),
             profile_avatar_repo=ProfileAvatarRepo(db),
             control_file_repo=ControlFileRepo(db),
+            amoeba_repo=AmoebaRepo(db),
         )
 
 

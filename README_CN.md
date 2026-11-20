@@ -270,9 +270,11 @@ octop run
 # 自定义主机与端口
 octop run --host 0.0.0.0 --port 8088
 
-# 注册为系统服务（systemd / launchd / Windows 服务）
+# 注册为系统服务（Linux 的 systemd 或 macOS 的 launchd）
 octop service start
 ```
+
+Windows 上可通过 Servy 将 Octop 注册为系统服务并设置开机自启。[Windows 服务配置](docs/user-guide.md#使用-servy-配置-windows-服务)
 
 打开 **http://127.0.0.1:8088**。Docker 若设置了合格的 `OCTOP_DEFAULT_PASSWORD`，首次启动会创建管理员（凭据写入 `/data/.octop/credential.txt`）；未设置或密码不合格则打开设置向导（向导口令在 `/data/.octop/octop-login.txt`）。交互式 `octop init` / 设置向导会让你自行设置密码（至少 8 位，且同时包含字母和数字）。
 
@@ -419,8 +421,8 @@ OpenAI 兼容 API、DashScope（千问）、Ollama 等预设 — 在控制台或
 |------|------|
 | `octop init` | 初始化 `~/.octop/`（数据库、管理员、JWT 密钥） |
 | `octop run` | 前台启动 Octop |
-| `octop service start` | 安装并启动系统服务 |
-| `octop service stop` | 停止系统服务 |
+| `octop service start` | 安装并启动系统服务（Linux / macOS） |
+| `octop service stop` | 停止系统服务（Linux / macOS） |
 | `octop agent` | 创建、列出、启停 Agent |
 | `octop channel` | 安装与管理 IM 通道 |
 | `octop chats` | REPL 与会话管理 |
@@ -562,6 +564,8 @@ cd dashboard && npx tsc -b
 模块边界与编码规范见 [AGENTS.md](AGENTS.md)。
 
 ## 📋 更新日志
+
+近期新增阿米巴看板和机构部门管理，Web 控制台更新为昆仑品牌，并补充了使用 Servy 配置 Windows 服务的说明。
 
 详见 [CHANGELOG.md](CHANGELOG.md)。
 

@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import KunlunMascot from "../../../components/KunlunMascot";
 import { useElapsedSince } from "../../../hooks/useElapsedSeconds";
 import styles from "../index.module.less";
 
@@ -12,14 +13,13 @@ export default function ThinkingBubble({
   startedAt,
 }: ThinkingBubbleProps) {
   const { t } = useTranslation();
-  const typingSrc = `${import.meta.env.BASE_URL}octop-mascot-type.webp`;
   const elapsed = useElapsedSince(startedAt);
 
   return (
     <div className={styles.thinkingBubble}>
       <div className={styles.avatarCol}>
         <div className={styles.botAvatar}>
-          <img src={typingSrc} alt="" aria-hidden draggable={false} />
+          <KunlunMascot focused />
         </div>
       </div>
       <div className={styles.thinkingContent}>

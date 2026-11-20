@@ -2,13 +2,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string) => key,
-    i18n: { language: "zh" },
-  }),
-}));
-
 vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
 }));
@@ -73,6 +66,8 @@ async function openSettings() {
   const view = userEvent.setup();
   render(<AvatarDropdown user={user} placement="sidebar" />);
   await view.click(screen.getByRole("button", { name: /Ada/ }));
+  expect(screen.queryByText("account.helpFeedback")).not.toBeInTheDocument();
+  expect(screen.queryByText("account.projectUrl")).not.toBeInTheDocument();
   await view.click(screen.getByRole("button", { name: "account.settings" }));
   return view;
 }
@@ -117,12 +112,12 @@ describe("AvatarDropdown personal settings", () => {
     ).not.toBeInTheDocument();
     await view.click(screen.getByRole("button", { name: "account.security" }));
 
-    expect(
-      await screen.findByText("account.currentPassword"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "account.changePassword" }),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByLabelText("account.currentPassword")).toBeVisible();
+      expect(
+        screen.getByRole("button", { name: "account.changePassword" }),
+      ).toBeVisible();
+    });
     expect(
       document.querySelector(".ant-drawer-right, .octop-drawer-right"),
     ).toBeTruthy();

@@ -168,6 +168,8 @@ export default defineConfig(({ mode }) => {
         // Include the offline fallback in the SW precache.
         includeAssets: [
           "offline.html",
+          "kunlun-worker.svg",
+          "kunlun-worker-empty.svg",
           "logo_vertical_dark.svg",
           "logo_vertical_white.svg",
           "logo_horizontal_dark.png",

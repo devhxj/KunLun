@@ -2282,6 +2282,8 @@ _PERSONALIZATION_TAB_PERMISSIONS = (
 _PERSONALIZATION_TAB_PERMISSIONS_FLAG = "granted_personalization_tab_permissions"
 _BRIDGE_PERMISSIONS = ("bridge",)
 _BRIDGE_PERMISSIONS_FLAG = "granted_bridge_permission"
+_AMOEBA_PERMISSIONS = ("amoeba",)
+_AMOEBA_PERMISSIONS_FLAG = "granted_amoeba_permission"
 
 
 def _parse_perm_list(raw: Any) -> list[str] | None:
@@ -2383,6 +2385,11 @@ def _grant_personalization_tab_permissions(db: DatabasePool) -> None:
 def _grant_bridge_permission(db: DatabasePool) -> None:
     """Grant cloud-collab once; /bridge used to be ungated for every signed-in user."""
     _grant_permission_keys_once(db, _BRIDGE_PERMISSIONS, _BRIDGE_PERMISSIONS_FLAG)
+
+
+def _grant_amoeba_permission(db: DatabasePool) -> None:
+    """Grant the amoeba board once; the page ships as a default-on nav item."""
+    _grant_permission_keys_once(db, _AMOEBA_PERMISSIONS, _AMOEBA_PERMISSIONS_FLAG)
 
 
 _PAGE_TAB_EXPANSIONS_FLAG = "expanded_page_tab_permissions_v1"
@@ -2524,5 +2531,6 @@ def run_migrations(db: DatabasePool) -> None:
     _grant_default_nav_permissions(db)
     _grant_personalization_tab_permissions(db)
     _grant_bridge_permission(db)
+    _grant_amoeba_permission(db)
     _expand_page_tab_permissions(db)
     _repair_connector_text_credentials(db)

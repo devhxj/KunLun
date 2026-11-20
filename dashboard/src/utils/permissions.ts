@@ -80,6 +80,7 @@ export const PERM = {
   experts: ["experts"],
   tasks: ["tasks"],
   tokenUsage: ["token_usage"],
+  amoeba: ["amoeba"],
 } as const satisfies Record<string, readonly string[]>;
 
 /** Sidebar item key → permission keys. Shared with path guards. */
@@ -108,6 +109,7 @@ export const NAV_PERMISSIONS = {
   experts: PERM.experts,
   tasks: PERM.tasks,
   "token-usage": PERM.tokenUsage,
+  amoeba: PERM.amoeba,
   personalization: PERM.personalization,
   channels: PERM.channels,
   connectors: PERM.connectors,
@@ -132,6 +134,7 @@ export const USERS_TAB_PERMISSIONS = {
   local: "users",
   roles: "user_roles",
   groups: "user_groups",
+  departments: [], // Admin-only until department permissions are defined.
   feishu: "sso_feishu",
   wecom: "sso_wecom",
   dingtalk: "sso_dingtalk",
@@ -333,6 +336,9 @@ export function pathPermissionKeys(pathname: string): PermissionKeys | null {
   }
   if (pathname === "/token-usage" || pathname.startsWith("/token-usage/")) {
     return PERM.tokenUsage;
+  }
+  if (pathname === "/amoeba" || pathname.startsWith("/amoeba/")) {
+    return PERM.amoeba;
   }
   return null;
 }

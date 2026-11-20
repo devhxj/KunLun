@@ -1,6 +1,6 @@
 {
   "app": {
-    "pageTitle": "Octop"
+    "pageTitle": "昆仑"
   },
   "layout": {
     "collapsePanel": "Collapse panel",
@@ -245,6 +245,11 @@
     "USER_ROLE_ID_TAKEN": "This role ID is already in use.",
     "USER_GROUP_ID_INVALID": "Group ID must be 3-64 chars of letters/digits/underscore/hyphen, starting and ending with a letter or digit.",
     "USER_GROUP_ID_TAKEN": "This group ID is already in use.",
+    "DEPARTMENT_HAS_CHILDREN": "Delete the child departments before deleting this node.",
+    "AMOEBA_SOURCE_NOT_CONFIGURED": "The amoeba data source is not configured yet.",
+    "AMOEBA_SYNC_FAILED": "Failed to sync data from the amoeba source.",
+    "AMOEBA_METRIC_TAKEN": "A metric with this key already exists.",
+    "AMOEBA_METRIC_BAD_FORMULA": "The metric formula is invalid.",
     "INVITE_USED": "This invite code has already been used.",
     "INVITE_EXPIRED": "This invite code has expired.",
     "INVITE_REVOKED": "This invite code has been revoked.",
@@ -318,6 +323,7 @@
     "advancedSettings": "Advanced Settings",
     "embedding": "Embedding",
     "tokenUsage": "Token Usage",
+    "amoeba": "Amoeba board",
     "checkUpdates": "App Updates",
     "newVersionBadge": "New version",
     "newVersionBadgeShort": "NEW",
@@ -572,7 +578,7 @@
     "editDocumentSuccess": "Saved; reindex started",
     "editDocumentFailed": "Failed to save document",
     "filenameRequired": "Please enter a file name",
-    "filenamePlaceholder": "e.g. notes",
+    "filenamePlaceholder": "File name",
     "fileFormat": "Format",
     "fileContent": "Content",
     "fileContentPlaceholder": "Write document content here…",
@@ -593,7 +599,6 @@
     "moveSuccess": "Moved",
     "moveSuccessTo": "Moved to “{{name}}”",
     "moveFailed": "Failed to move",
-    "filenamePlaceholder": "File name",
     "pathBreadcrumb": "Path",
     "deleteFolderConfirm": "Delete this folder and everything inside it?",
     "uploaded": "Documents uploaded",
@@ -740,7 +745,7 @@
   },
   "setupWizard": {
     "title": "Setup Wizard",
-    "subtitle": "Welcome to Octop",
+    "subtitle": "Welcome to 昆仑",
     "stepPassword": "Set Password",
     "stepMigrate": "Migrate OpenClaw",
     "stepScene": "Scene",
@@ -3020,6 +3025,10 @@
     "telegramAllowedUsers": "Allowed Telegram user IDs (comma or newline separated)",
     "telegramAllowedUsersHelp": "Only these numeric user IDs can talk to the bot, in private chats and groups. Leave empty to let anyone who finds the bot use it."
   },
+  "amoeba": {
+    "title": "Amoeba board",
+    "subtitle": "Three-level business roll-ups: org tree, day/month/year, budget and trend"
+  },
   "tokenUsage": {
     "title": "Token Usage Analytics",
     "description": "Analyze token consumption trends across channels and sessions",
@@ -4533,7 +4542,7 @@
     "progress": "Step {{current}} of {{total}}",
     "keyboardHint": "← → to move, Esc to exit",
     "intro": {
-      "title": "Welcome to Octop",
+      "title": "Welcome to 昆仑",
       "body": "Follow the tour through the pages below. Leave any time, and replay it later from Getting started in your account menu.",
       "duration": "{{count}} steps, about a minute"
     },
@@ -4588,10 +4597,8 @@
     "languageHint": "Choose the console display language.",
     "themeLight": "Light",
     "themeDark": "Dark",
-    "helpFeedback": "Help & Feedback",
     "onboarding": "Getting started",
     "helpBuilding": "Under construction",
-    "projectUrl": "Project",
     "checkUpdates": "Check for Updates",
     "username": "Username",
     "role": "Role",
@@ -6594,6 +6601,61 @@
     "tabLocal": "User management",
     "tabRoles": "Roles",
     "tabGroups": "User groups",
+    "tabDepartments": "Organization & departments",
+    "departments": {
+      "addRoot": "Add organization",
+      "addChild": "Add child department",
+      "rename": "Rename node",
+      "name": "Name",
+      "empty": "No organizations yet",
+      "loadFailed": "Could not load departments",
+      "confirmDelete": "Delete {{name}}?",
+      "editProfile": "Edit profile",
+      "profileLoadFailed": "Could not load the organization profile",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "yes": "Yes",
+      "no": "No",
+      "sections": {
+        "organization": "Organization profile",
+        "station": "Area and station",
+        "operations": "Operations and services",
+        "contact": "Address and contact"
+      },
+      "fields": {
+        "name": "Short name",
+        "full_name": "Full name",
+        "parent": "Parent organization",
+        "enabled": "Status",
+        "sort_order": "Sort order",
+        "effective_date": "Effective date",
+        "code_path": "Code path",
+        "name_path": "Short-name path",
+        "province_company_code": "Provincial company code",
+        "province_company_name": "Provincial company name",
+        "city_company_code": "City company code",
+        "city_company_name": "City company name",
+        "area_code": "Area code",
+        "area_name": "Area name",
+        "site_code": "Station code",
+        "site_name": "Station name",
+        "hos_code": "HOS code",
+        "erp_code": "ERP code",
+        "site_type": "Station type",
+        "operating_status": "Operating status",
+        "source_site_status": "Source station status",
+        "virtual_site": "Virtual station",
+        "business_type_code": "Business type code",
+        "management_type_code": "Management type code",
+        "service_items": "Services",
+        "administrative_region": "Administrative region",
+        "address": "Address",
+        "contact_name": "Contact name",
+        "contact_phone": "Contact phone",
+        "contact_email": "Contact email",
+        "updated_at": "Profile last updated"
+      }
+    },
     "groupHint": "Groups limit who can see a resource; they do not grant edit rights. Disabling a group suspends its grants until you turn it back on.",
     "groupCreate": "New user group",
     "groupCreateTitle": "New user group",
@@ -7843,7 +7905,7 @@
     "later": "Later",
     "addToHomeScreen": "Add to Home Screen",
     "close": "Close",
-    "installAsAppDesc": "Install Octop as an app for one-tap access anytime.",
+    "installAsAppDesc": "Install 昆仑 as an app for one-tap access anytime.",
     "iosStep1Prefix": "Tap the",
     "iosStep1Suffix": "Share button in the bottom toolbar",
     "iosStep2": "Scroll down and tap \"Add to Home Screen\"",
@@ -8028,5 +8090,68 @@
     "nameRequired": "Enter a name first",
     "failed": "Polish failed. Please try again later.",
     "emptyResult": "The model returned an empty result"
+  },
+  "amoeba": {
+    "dim": {
+      "d": "Day",
+      "m": "Month",
+      "y": "Year"
+    },
+    "mom": "DoD",
+    "yoy": "YoY",
+    "budget": "budget",
+    "asof": "Data as of {date} 24:00",
+    "empty": "No board data yet. Configure the MCP source and run a sync first.",
+    "restricted": "You are viewing the departments bound to your account.",
+    "tree": {
+      "search": "Search department…",
+      "all": "All departments",
+      "empty": "No departments visible"
+    },
+    "summary": {
+      "title": "AI summary",
+      "rule": "Rule"
+    },
+    "drawer": {
+      "title": "Metric detail",
+      "trend": "Trend (last 30 days)",
+      "ranking": "Leaf ranking",
+      "noRanking": "No leaf units in this scope"
+    },
+    "discount": {
+      "item": "Discount item",
+      "rule": "Allocation rule"
+    },
+    "categories": {
+      "core": "Core KPIs",
+      "category": "Sales by category",
+      "profit": "Benefit",
+      "pay": "Instant pay incentives",
+      "discount": "Discounts & operations detail",
+      "ops": "Operations"
+    },
+    "admin": {
+      "title": "Amoeba admin",
+      "source": "MCP data source",
+      "notConfigured": "Source not configured yet — enter the URL and token, then test.",
+      "enabled": "Enabled",
+      "url": "Source URL",
+      "urlRequired": "URL is required",
+      "token": "Bearer token",
+      "tokenSet": "A token is stored; leave blank to keep it.",
+      "syncDays": "History window (days)",
+      "autoSync": "Daily auto sync",
+      "syncSchedule": "Sync schedule (cron)",
+      "test": "Test",
+      "testOk": "Source reachable — {count} tools available",
+      "testMissing": "Missing required tools: {tools}",
+      "testFailed": "Connection test failed",
+      "syncNow": "Sync now",
+      "syncOk": "Synced {units} units / {rows} rows, as of {asof}",
+      "syncFailed": "Sync failed",
+      "bindings": "Data scope bindings",
+      "bindingsHint": "Bind users to departments; a user sees the bound department subtree only (admins see everything).",
+      "selectUser": "Select user"
+    }
   }
 }

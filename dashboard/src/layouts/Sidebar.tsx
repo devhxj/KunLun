@@ -520,8 +520,8 @@ export default function Sidebar({
   const brandInner = (
     <>
       <img
-        src={isRailCollapsed ? publicUrl("logo_mark.svg") : wordmarkSrc}
-        alt="Octop"
+        src={isRailCollapsed ? publicUrl("kunlun-worker.svg") : wordmarkSrc}
+        alt="昆仑"
         className={isRailCollapsed ? styles.brandMarkCollapsed : undefined}
         style={{
           height: isRailCollapsed ? 26 : isMobile ? 38 : 36,

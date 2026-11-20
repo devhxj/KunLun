@@ -533,6 +533,7 @@
     "USER_ROLE_ID_TAKEN": "该角色 ID 已被使用。",
     "USER_GROUP_ID_INVALID": "分组 ID 须为 3-64 位字母/数字/下划线/连字符，且以字母或数字开头结尾。",
     "USER_GROUP_ID_TAKEN": "该分组 ID 已被使用。",
+    "DEPARTMENT_HAS_CHILDREN": "请先删除下级部门，再删除此节点。",
     "INVITE_USED": "该邀请码已被使用。",
     "INVITE_EXPIRED": "该邀请码已过期。",
     "INVITE_REVOKED": "该邀请码已被撤销。",
@@ -561,7 +562,11 @@
     "MFA_LAST_FACTOR": "无法移除最后一个二次验证方式。",
     "WEBAUTHN_CONFIG_INVALID": "还不能使用通行密钥。请管理员在「应用设置 → 通行密钥」填写本站域名和完整网址。如果已经填过，请改用登记的那个网址打开。用 localhost 打开则不用填。",
     "WEBAUTHN_INVALID_DOMAIN": "通行密钥需要有效域名。请通过 http://localhost 打开（不要用 127.0.0.1 等 IP 地址）。",
-    "WEBAUTHN_LOGIN_DISABLED": "登录页的通行密钥登录已关闭。管理员可在「应用设置 → 通行密钥」中开启。"
+    "WEBAUTHN_LOGIN_DISABLED": "登录页的通行密钥登录已关闭。管理员可在「应用设置 → 通行密钥」中开启。",
+    "AMOEBA_SOURCE_NOT_CONFIGURED": "阿米巴数据源未配置",
+    "AMOEBA_SYNC_FAILED": "从阿米巴数据源同步数据失败",
+    "AMOEBA_METRIC_TAKEN": "已存在同名指标 key",
+    "AMOEBA_METRIC_BAD_FORMULA": "指标公式无效"
   },
   "desktop": {
     "install_log_deps": "正在安装 Python 依赖…",
@@ -1236,5 +1241,23 @@
     "summary_dry_run": "将迁移 {migrated} 项，跳过 {skipped} 项，失败 {failed} 项。",
     "dry_run_hint": "预演模式：没有写入任何内容。去掉 --dry-run 后再运行即可执行迁移。",
     "restart_hint": "如果 `octop run` 正在运行，请重启以加载迁移的模型供应商和通道。"
+  },
+  "amoeba": {
+    "categories": {
+      "core": "核心指标",
+      "category": "分品类销量与新能源",
+      "profit": "效益类",
+      "pay": "即时薪酬",
+      "discount": "折扣与运营明细",
+      "ops": "运营类"
+    },
+    "insights": {
+      "system": "你是加油站阿米巴看板的经营分析助手。根据给定的上卷指标（数值、涨跌幅、预算达成率），输出 3-5 条简短小结：每条引用具体数值、指出趋势方向并给一条可执行建议，一行一条，不要列表符号，不要开场白。",
+      "behindBudget": "{name} {value}{unit}，预算达成 {pct}%，进度偏慢，建议加大推进力度。",
+      "aheadBudget": "{name} {value}{unit}，预算达成 {pct}%，已超进度，保持势头。",
+      "declining": "{name} {value}{unit}，较上期下降 {pct}%，需关注驱动因素。",
+      "growing": "{name} {value}{unit}，较上期增长 {pct}%。",
+      "noSignal": "{org} 暂无值得关注的信号，请先同步数据。"
+    }
   }
 }

@@ -22,6 +22,7 @@ const NAV_PERMISSION_CHIPS: readonly {
     labelKey: "nav.tokenUsage",
     permissions: ["token_usage"],
   },
+  { key: "amoeba", labelKey: "nav.amoeba", permissions: ["amoeba"] },
   {
     key: "personalization",
     labelKey: "nav.personalization",

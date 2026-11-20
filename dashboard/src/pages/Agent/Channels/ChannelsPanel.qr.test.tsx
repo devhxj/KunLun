@@ -10,7 +10,11 @@ import ChannelsPanel from "./ChannelsPanel";
 
 const api = vi.mocked(request, true);
 let interval: ReturnType<typeof vi.spyOn>;
-afterEach(() => interval?.mockRestore());
+let clearIntervalSpy: ReturnType<typeof vi.spyOn> | undefined;
+afterEach(() => {
+  interval?.mockRestore();
+  clearIntervalSpy?.mockRestore();
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -123,6 +127,7 @@ describe("channel QR lifecycle (#2314)", () => {
   );
 
   it("discards a pending poll success after switching back to manual DingTalk", async () => {
+    clearIntervalSpy = vi.spyOn(globalThis, "clearInterval");
     let resolvePoll!: (value: { status: string; token: string }) => void;
     api.mockImplementation(async (url, init) => {
       if (url.endsWith("weixin/qrcode/generate"))
@@ -140,9 +145,11 @@ describe("channel QR lifecycle (#2314)", () => {
     await waitFor(() =>
       expect(interval).toHaveBeenCalledWith(expect.any(Function), 3000),
     );
-    const poll = interval.mock.calls.find(
+    const pollIndex = interval.mock.calls.findIndex(
       ([, delay]) => delay === 3000,
-    )![0] as () => Promise<void>;
+    );
+    const poll = interval.mock.calls[pollIndex][0] as () => Promise<void>;
+    const timer = interval.mock.results[pollIndex].value;
     let pending!: Promise<void>;
     act(() => {
       pending = poll();
@@ -159,14 +166,6 @@ describe("channel QR lifecycle (#2314)", () => {
           url === "/agents/ag1/channels" && init?.method === "POST",
       ),
     ).toHaveLength(0);
-    const pollCalls = api.mock.calls.filter(([url]) =>
-      url.endsWith("weixin/qrcode/poll"),
-    ).length;
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 3100));
-    });
-    expect(
-      api.mock.calls.filter(([url]) => url.endsWith("weixin/qrcode/poll")),
-    ).toHaveLength(pollCalls);
+    expect(clearIntervalSpy).toHaveBeenCalledWith(timer);
   });
 });

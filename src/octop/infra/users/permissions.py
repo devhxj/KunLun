@@ -58,6 +58,7 @@ PERMISSIONS: dict[str, PermissionDef] = {
     "experts": _p("experts", "nav", "专家", "Experts"),
     "tasks": _p("tasks", "nav", "自动化", "Automation"),
     "token_usage": _p("token_usage", "nav", "Token 统计", "Token usage"),
+    "amoeba": _p("amoeba", "nav", "阿米巴看板", "Amoeba board"),
     # --- settings (nav.settings) — listed & default-selected for new users ---
     # Personalization tabs. ``channels`` is also a sidebar item; the rest are
     # tabs on the personalization page. ``agent_plugins`` is per-agent plugin

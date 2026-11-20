@@ -6,6 +6,8 @@ import {
 } from "../../../api/modules/octopThreads";
 import * as chatStore from "./chatStore";
 import { useChat } from "./useChat";
+// Load the session module before timing tests that trigger the lazy history loader.
+import "./useSessions";
 import {
   clearInflightTail,
   flushInflightTail,
@@ -174,7 +176,9 @@ describe("history failures", () => {
     });
     resolveHistory({
       thread_id: thread,
-      messages: [{ id: "old", role: "assistant", content: "之前的回复" }],
+      messages: [
+        { id: "old", role: "assistant", content: "之前的回复", timestamp: 1 },
+      ],
       has_more: false,
     });
     await act(async () => {

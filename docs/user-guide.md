@@ -149,15 +149,33 @@ docker run -d \
 octop run       # 前台启动 API + Web 控制台
 ```
 
-若希望服务在后台常驻，可注册为系统服务：
+Linux 和 macOS 可以通过 Octop CLI 注册系统服务。Windows 可以通过 Servy 注册，见下方步骤。
 
 ```bash
-octop service start   # Linux(systemd) / macOS(launchd) / Windows 服务
+octop service start   # Linux (systemd) / macOS (launchd)
 ```
 
 启动后打开 **http://127.0.0.1:8088**。
 
 首次访问会**自动跳转到设置向导页面**（URL 类似 `/setup`）。若启用了启动密码保护，向导会先要求输入一次性「设置密码」。
+
+#### 使用 Servy 配置 Windows 服务
+
+通过 Windows 安装脚本安装 Octop 后，可以用 Servy 将 `octop run` 注册为 Windows 服务，并设置开机自启。安装 Servy 和注册服务需要管理员权限。[Servy 安装指南](https://github.com/aelassas/servy/wiki/Installation-Guide)
+
+在 Servy 中新建服务，将下表中的 `C:\Users\alice\.octop` 替换为实际安装目录。
+
+| 配置项 | 示例值 |
+|--------|--------|
+| 服务名称 | `Octop` |
+| 可执行文件 | `C:\Users\alice\.octop\venv\Scripts\python.exe` |
+| 参数 | `-m octop run` |
+| 工作目录 | `C:\Users\alice\.octop` |
+| 环境变量 | `OCTOP_HOME=C:\Users\alice\.octop` |
+| 服务账户 | 安装 Octop 的 Windows 账户 |
+| 启动类型 | 自动（Automatic） |
+
+显式设置 `OCTOP_HOME`，让服务沿用已有配置、数据库和工作区。如果 Octop 正在前台运行，先按 `Ctrl+C` 停止，再在 Servy 中启动服务。使用默认端口时，可访问 `http://127.0.0.1:8088/api/health` 检查服务是否响应。首次启动若要求设置密码，可在 `OCTOP_HOME` 下的 `octop-login.txt` 中查看。
 
 ### 3.2 向导步骤说明
 
@@ -398,8 +416,8 @@ Octop 支持两个方向的 ACP 集成：
 |------|------|
 | `octop run` | 前台启动 Octop |
 | `octop run --host 0.0.0.0 --port 8088` | 自定义监听地址与端口 |
-| `octop service start` | 安装并启动系统服务 |
-| `octop service stop` | 停止系统服务 |
+| `octop service start` | 安装并启动系统服务（Linux / macOS） |
+| `octop service stop` | 停止系统服务（Linux / macOS） |
 | `octop agent` | 创建、列出、启停 Agent |
 | `octop channel` | 安装与管理 IM 通道 |
 | `octop bridge` | 添加 / 探测 / 编辑 / 删除远程 Octop 对端 |

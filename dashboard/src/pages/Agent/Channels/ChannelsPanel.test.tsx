@@ -20,6 +20,10 @@ vi.mock("../../../api/request", () => ({
   request: vi.fn(),
 }));
 
+vi.mock("@/utils/antdMessage", () => ({
+  message: { success: vi.fn(), warning: vi.fn(), error: vi.fn() },
+}));
+
 import { request } from "../../../api/request";
 import ChannelsPanel from "./ChannelsPanel";
 

@@ -1,6 +1,6 @@
 {
   "app": {
-    "pageTitle": "Octop"
+    "pageTitle": "昆仑"
   },
   "layout": {
     "collapsePanel": "收起面板",
@@ -245,6 +245,11 @@
     "USER_ROLE_ID_TAKEN": "该角色 ID 已被使用。",
     "USER_GROUP_ID_INVALID": "分组 ID 须为 3-64 位字母/数字/下划线/连字符，且以字母或数字开头结尾。",
     "USER_GROUP_ID_TAKEN": "该分组 ID 已被使用。",
+    "DEPARTMENT_HAS_CHILDREN": "请先删除下级部门，再删除此节点。",
+    "AMOEBA_SOURCE_NOT_CONFIGURED": "阿米巴数据源尚未配置。",
+    "AMOEBA_SYNC_FAILED": "从阿米巴数据源同步数据失败。",
+    "AMOEBA_METRIC_TAKEN": "已存在同名指标 key。",
+    "AMOEBA_METRIC_BAD_FORMULA": "指标公式无效。",
     "INVITE_USED": "该邀请码已被使用。",
     "INVITE_EXPIRED": "该邀请码已过期。",
     "INVITE_REVOKED": "该邀请码已被撤销。",
@@ -318,6 +323,7 @@
     "advancedSettings": "高级设置",
     "embedding": "Embedding",
     "tokenUsage": "Token 统计",
+    "amoeba": "阿米巴看板",
     "checkUpdates": "应用更新",
     "newVersionBadge": "有新版本",
     "newVersionBadgeShort": "新",
@@ -572,7 +578,7 @@
     "editDocumentSuccess": "已保存，正在重建索引",
     "editDocumentFailed": "保存文档失败",
     "filenameRequired": "请输入文件名",
-    "filenamePlaceholder": "例如 notes",
+    "filenamePlaceholder": "文件名",
     "fileFormat": "格式",
     "fileContent": "内容",
     "fileContentPlaceholder": "在此编写文档内容…",
@@ -593,7 +599,6 @@
     "moveSuccess": "已移动",
     "moveSuccessTo": "已移动到「{{name}}」",
     "moveFailed": "移动失败",
-    "filenamePlaceholder": "文件名",
     "pathBreadcrumb": "路径导航",
     "deleteFolderConfirm": "删除此文件夹及其内部文档？",
     "uploaded": "文档已上传",
@@ -740,7 +745,7 @@
   },
   "setupWizard": {
     "title": "设置向导",
-    "subtitle": "欢迎使用 Octop",
+    "subtitle": "欢迎使用昆仑",
     "stepPassword": "设置密码",
     "stepMigrate": "迁移 OpenClaw",
     "stepScene": "应用场景",
@@ -3020,6 +3025,10 @@
     "telegramAllowedUsers": "允许的 Telegram 用户 ID（逗号或换行分隔）",
     "telegramAllowedUsersHelp": "仅这些数字用户 ID 可以与机器人对话（私聊和群聊均生效）。留空则任何找到该机器人的人都能使用。"
   },
+  "amoeba": {
+    "title": "阿米巴看板",
+    "subtitle": "三级组织穿透：日 / 月 / 年经营总览，预算达成与趋势"
+  },
   "tokenUsage": {
     "title": "Token 消耗统计",
     "description": "分析各渠道和会话的 Token 消耗趋势",
@@ -4533,7 +4542,7 @@
     "progress": "第 {{current}} 步，共 {{total}} 步",
     "keyboardHint": "← → 切换，Esc 退出",
     "intro": {
-      "title": "欢迎使用 Octop",
+      "title": "欢迎使用昆仑",
       "body": "跟着导览打开下面这些页面。随时可以退出，之后从左下角头像菜单的「新手引导」再看一遍。",
       "duration": "共 {{count}} 步，约 1 分钟"
     },
@@ -4588,10 +4597,8 @@
     "languageHint": "选择界面显示语言。",
     "themeLight": "浅色",
     "themeDark": "深色",
-    "helpFeedback": "帮助与反馈",
     "onboarding": "新手引导",
     "helpBuilding": "正在建设中",
-    "projectUrl": "项目地址",
     "checkUpdates": "检查更新",
     "username": "用户名",
     "role": "角色",
@@ -6594,6 +6601,61 @@
     "tabLocal": "用户管理",
     "tabRoles": "角色管理",
     "tabGroups": "用户分组",
+    "tabDepartments": "机构部门",
+    "departments": {
+      "addRoot": "新增机构",
+      "addChild": "新增下级部门",
+      "rename": "修改名称",
+      "name": "名称",
+      "empty": "还没有机构",
+      "loadFailed": "加载机构部门失败",
+      "confirmDelete": "删除「{{name}}」？",
+      "editProfile": "编辑资料",
+      "profileLoadFailed": "加载机构资料失败",
+      "enabled": "启用",
+      "disabled": "停用",
+      "yes": "是",
+      "no": "否",
+      "sections": {
+        "organization": "机构资料",
+        "station": "片区与站点",
+        "operations": "经营与服务",
+        "contact": "地址与联系"
+      },
+      "fields": {
+        "name": "简称",
+        "full_name": "全称",
+        "parent": "上级机构",
+        "enabled": "状态",
+        "sort_order": "排序号",
+        "effective_date": "生效日期",
+        "code_path": "编码路径",
+        "name_path": "简称路径",
+        "province_company_code": "省公司编码",
+        "province_company_name": "省公司名称",
+        "city_company_code": "地市公司编码",
+        "city_company_name": "地市公司名称",
+        "area_code": "片区编码",
+        "area_name": "片区名称",
+        "site_code": "站点编码",
+        "site_name": "站点名称",
+        "hos_code": "HOS编码",
+        "erp_code": "ERP编码",
+        "site_type": "站点类型",
+        "operating_status": "运营状态",
+        "source_site_status": "来源站点状态",
+        "virtual_site": "虚拟站点",
+        "business_type_code": "业务类型编码",
+        "management_type_code": "管理类型编码",
+        "service_items": "服务项目",
+        "administrative_region": "行政区域",
+        "address": "地址",
+        "contact_name": "联系人",
+        "contact_phone": "联系电话",
+        "contact_email": "联系邮箱",
+        "updated_at": "资料更新时间"
+      }
+    },
     "groupHint": "用分组限制谁能看到资源，不授予编辑权。停用后本组授权暂时失效，重新启用后恢复。",
     "groupCreate": "新建用户分组",
     "groupCreateTitle": "新建用户分组",
@@ -7843,7 +7905,7 @@
     "later": "稍后更新",
     "addToHomeScreen": "添加到主屏幕",
     "close": "关闭",
-    "installAsAppDesc": "将 Octop 安装为 App，随时一键打开。",
+    "installAsAppDesc": "将昆仑安装为 App，随时一键打开。",
     "iosStep1Prefix": "点击底部工具栏的",
     "iosStep1Suffix": "分享按钮",
     "iosStep2": "向下滚动，点击「添加到主屏幕」",
@@ -8028,5 +8090,68 @@
     "nameRequired": "请先填写名称",
     "failed": "润色失败，请稍后重试",
     "emptyResult": "模型未返回结果"
+  },
+  "amoeba": {
+    "dim": {
+      "d": "日",
+      "m": "月",
+      "y": "年"
+    },
+    "mom": "环比",
+    "yoy": "同比",
+    "budget": "预算",
+    "asof": "数据截至 {date} 24:00",
+    "empty": "暂无看板数据，请先配置 MCP 数据源并执行同步。",
+    "restricted": "当前展示绑定到你账号的部门范围。",
+    "tree": {
+      "search": "搜索部门…",
+      "all": "全部部门",
+      "empty": "暂无可见部门"
+    },
+    "summary": {
+      "title": "智能小结",
+      "rule": "规则"
+    },
+    "drawer": {
+      "title": "指标详情",
+      "trend": "走势（近 30 天）",
+      "ranking": "分单元排名",
+      "noRanking": "当前范围没有叶子单元"
+    },
+    "discount": {
+      "item": "折扣项",
+      "rule": "分摊规则"
+    },
+    "categories": {
+      "core": "核心指标",
+      "category": "分品类销量与新能源",
+      "profit": "效益类",
+      "pay": "即时薪酬",
+      "discount": "折扣与运营明细",
+      "ops": "运营类"
+    },
+    "admin": {
+      "title": "看板管理",
+      "source": "MCP 数据源",
+      "notConfigured": "数据源尚未配置 —— 填写 URL 与令牌后先测试连通性。",
+      "enabled": "启用",
+      "url": "数据源地址",
+      "urlRequired": "请填写数据源地址",
+      "token": "Bearer 令牌",
+      "tokenSet": "已保存令牌，留空表示不修改。",
+      "syncDays": "回看天数",
+      "autoSync": "每日自动同步",
+      "syncSchedule": "同步计划（cron）",
+      "test": "测试",
+      "testOk": "数据源可达 —— 可用工具 {count} 个",
+      "testMissing": "缺少必需工具：{tools}",
+      "testFailed": "连通性测试失败",
+      "syncNow": "立即同步",
+      "syncOk": "已同步 {units} 个单元 / {rows} 行，数据截至 {asof}",
+      "syncFailed": "同步失败",
+      "bindings": "数据权限绑定",
+      "bindingsHint": "将用户绑定到部门；普通用户只能看到绑定部门的子树，管理员可见全部。",
+      "selectUser": "选择用户"
+    }
   }
 }

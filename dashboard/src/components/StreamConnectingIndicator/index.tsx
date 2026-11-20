@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import cx from "classnames";
+import KunlunMascot from "../KunlunMascot";
 import styles from "./StreamConnectingIndicator.module.less";
-
-const MASCOT_TYPE = `${import.meta.env.BASE_URL}octop-mascot-type.webp`;
 
 interface StreamConnectingIndicatorProps {
   /** Status line under the animation (e.g. 「连接中」). */
@@ -17,7 +16,7 @@ interface StreamConnectingIndicatorProps {
 
 /**
  * Shared connecting / waiting-frame indicator for remote browser & desktop.
- * Uses the same Octop mascot loop as chat thinking bubbles.
+ * Uses the same worker animation as chat thinking bubbles.
  */
 export default function StreamConnectingIndicator({
   label,
@@ -33,13 +32,7 @@ export default function StreamConnectingIndicator({
 
   return (
     <div className={rootClass}>
-      <img
-        className={styles.mascot}
-        src={MASCOT_TYPE}
-        alt=""
-        aria-hidden
-        draggable={false}
-      />
+      <KunlunMascot className={styles.mascot} focused />
       <div className={styles.label}>{label}</div>
       {hint ? <div className={styles.hint}>{hint}</div> : null}
     </div>

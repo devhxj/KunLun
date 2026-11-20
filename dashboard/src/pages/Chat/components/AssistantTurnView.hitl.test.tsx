@@ -4,15 +4,6 @@ import type { ChatMessage } from "../hooks/useChat";
 import { COLLAPSE_THINKING_TEAM_KEY } from "../hooks/useCollapseThinking";
 import AssistantTurnView from "./AssistantTurnView";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, opts?: string | { defaultValue?: string }) => {
-      if (typeof opts === "string") return opts;
-      return opts?.defaultValue ?? key;
-    },
-  }),
-}));
-
 vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
 }));

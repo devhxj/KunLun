@@ -19,6 +19,7 @@ import {
   GraduationCap,
   Shield,
   PanelsTopLeft,
+  BarChart3,
 } from "lucide-react";
 import type { OctopUser } from "../api/modules/auth";
 import { navAllowed, userCan } from "../utils/permissions";
@@ -69,6 +70,7 @@ export const SIDEBAR_NAV_KEYS = [
   "experts",
   "tasks",
   "token-usage",
+  "amoeba",
   "personalization",
   "channels",
   "connectors",
@@ -181,6 +183,14 @@ export function buildNavSections(
       path: "/token-usage",
       icon: <Activity size={iconSize} strokeWidth={iconStroke} />,
       labelKey: "nav.tokenUsage",
+    });
+  }
+  if (navAllowed(user, "amoeba")) {
+    topItems.push({
+      key: "amoeba",
+      path: "/amoeba",
+      icon: <BarChart3 size={iconSize} strokeWidth={iconStroke} />,
+      labelKey: "nav.amoeba",
     });
   }
   const sections: NavSection[] = [{ items: topItems }];

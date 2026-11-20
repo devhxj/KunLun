@@ -13,6 +13,7 @@ const PersonalizationPage = lazy(
 );
 const ACPPage = lazy(() => import("../pages/Agent/ACP"));
 const TokenUsagePage = lazy(() => import("../pages/Control/TokenUsage"));
+const AmoebaPage = lazy(() => import("../pages/Amoeba"));
 
 // Lazy-loaded pages — Control
 const RemoteDesktopPage = lazy(() => import("../pages/Control/RemoteDesktop"));
@@ -65,6 +66,7 @@ export const pathToKey: Record<string, string> = {
   "/personalization/memory": "personalization",
   "/skills": "personalization",
   "/token-usage": "token-usage",
+  "/amoeba": "amoeba",
   "/agent-config": "agent-config",
   // Control
   "/acp": "acp",
@@ -168,6 +170,7 @@ export const routeConfigs: RouteConfig[] = [
     element: <RedirectPreserveSearch to="/personalization/skills" />,
   },
   { path: "/token-usage", element: <TokenUsagePage /> },
+  { path: "/amoeba", element: <AmoebaPage /> },
 
   // Control (RequirePermission via pathPermissionKeys in MainLayout)
   { path: "/acp", element: <ACPPage /> },

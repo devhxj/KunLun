@@ -66,6 +66,10 @@ OPENAPI_TAGS: list[dict[str, str]] = [
     {"name": "health", "description": "Liveness probe for load balancers and monitoring."},
     {"name": "users", "description": "Admin user management, roles, and user groups."},
     {
+        "name": "amoeba",
+        "description": "Amoeba business board: three-level department roll-ups fed by an MCP data source.",
+    },
+    {
         "name": "agents",
         "description": "Create and configure AI agents; start, stop, and inspect runtime status.",
     },

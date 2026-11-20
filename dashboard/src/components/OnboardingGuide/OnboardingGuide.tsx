@@ -28,7 +28,7 @@ import { preferencesApi } from "../../api/modules/preferences";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { navAllowed } from "../../utils/permissions";
-import { publicUrl } from "../../utils/publicUrl";
+import KunlunMascot from "../KunlunMascot";
 import {
   buildOnboardingSteps,
   type OnboardingStep,
@@ -199,12 +199,7 @@ export default function OnboardingGuide({
         className={styles.modal}
       >
         <div className={styles.intro}>
-          <img
-            src={publicUrl("octop-mascot-peek.webp")}
-            alt=""
-            className={styles.mascot}
-            draggable={false}
-          />
+          <KunlunMascot className={styles.mascot} />
           <h3 className={styles.heroTitle}>{t("onboarding.intro.title")}</h3>
           <p className={styles.heroText}>{t("onboarding.intro.body")}</p>
           <ul className={styles.conceptGrid}>

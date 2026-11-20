@@ -1,13 +1,14 @@
 import { useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useSearchParams } from "react-router-dom";
-import { Group, IdCard, Network, Users } from "lucide-react";
+import { Building2, Group, IdCard, Network, Users } from "lucide-react";
 import PageShell from "../../../layouts/PageShell";
 import TabBar, { type TabBarItem } from "../../../components/TabLabel/TabBar";
 import { TAB_ICON_SIZE } from "../../../components/TabLabel";
 import { TabPanelHeader } from "../../Settings/AdvancedSettings/TabPanelHeader";
 import RolesPanel from "./RolesPanel";
 import GroupsPanel from "./GroupsPanel";
+import DepartmentsPanel from "./DepartmentsPanel";
 import UsersListPanel from "./UsersListPanel";
 import SsoPanel from "./SsoPanel";
 import LdapPanel from "./LdapPanel";
@@ -22,7 +23,14 @@ import dingtalkIcon from "../../../assets/channels/dingtalk.svg";
 import openidIcon from "../../../assets/providers/openid.svg";
 import styles from "./index.module.less";
 
-type TabKey = "local" | "roles" | "groups" | OauthAppKind | "oidc" | "ldap";
+type TabKey =
+  | "local"
+  | "roles"
+  | "groups"
+  | "departments"
+  | OauthAppKind
+  | "oidc"
+  | "ldap";
 
 const OAUTH_BRAND_ICONS: Record<OauthAppKind, string> = {
   feishu: feishuIcon,
@@ -44,6 +52,11 @@ const TABS: TabBarItem<TabKey>[] = [
   { key: "local", labelKey: "adminUsers.tabLocal", icon: Users },
   { key: "roles", labelKey: "adminUsers.tabRoles", icon: IdCard },
   { key: "groups", labelKey: "adminUsers.tabGroups", icon: Group },
+  {
+    key: "departments",
+    labelKey: "adminUsers.tabDepartments",
+    icon: Building2,
+  },
   {
     key: "feishu",
     labelKey: "adminUsers.tabFeishu",
@@ -74,6 +87,7 @@ const TABS: TabBarItem<TabKey>[] = [
 function parseTab(raw: string | null): TabKey {
   if (raw === "roles") return "roles";
   if (raw === "groups") return "groups";
+  if (raw === "departments") return "departments";
   if (
     raw === "feishu" ||
     raw === "wecom" ||
@@ -132,6 +146,8 @@ function AdminUsersPageBody() {
     body = <RolesPanel />;
   } else if (activeTab === "groups") {
     body = <GroupsPanel />;
+  } else if (activeTab === "departments") {
+    body = <DepartmentsPanel />;
   } else if (activeTab === "oidc") {
     body = (
       <div className={styles.ssoPanel}>

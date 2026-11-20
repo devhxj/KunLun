@@ -598,6 +598,10 @@ class OctopServer:
 
             install_auto_backup_job(cron_mgr, server=self)
 
+            from octop.infra.amoeba.sync import install_amoeba_sync_job
+
+            install_amoeba_sync_job(cron_mgr, server=self)
+
         registry.set_cron_manager(cron_mgr)
         registry.set_team_processor(gateway.processor.teams)
         hitl_session_store = gateway.processor.hitl_coordinator.session_policies

@@ -1,14 +1,8 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import styles from "../../../pages/Chat/index.module.less";
 import { builtinPluginHost } from "../host";
 import { DefaultToolRenderer } from "./DefaultToolRenderer";
-
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
-  }),
-}));
 
 const base = {
   pluginId: "builtin",

@@ -533,6 +533,7 @@
     "USER_ROLE_ID_TAKEN": "This role ID is already in use.",
     "USER_GROUP_ID_INVALID": "Group ID must be 3-64 chars of letters/digits/underscore/hyphen, starting and ending with a letter or digit.",
     "USER_GROUP_ID_TAKEN": "This group ID is already in use.",
+    "DEPARTMENT_HAS_CHILDREN": "Delete the child departments before deleting this node.",
     "INVITE_USED": "This invite code has already been used.",
     "INVITE_EXPIRED": "This invite code has expired.",
     "INVITE_REVOKED": "This invite code has been revoked.",
@@ -561,7 +562,11 @@
     "MFA_LAST_FACTOR": "Cannot remove the last MFA factor.",
     "WEBAUTHN_CONFIG_INVALID": "Passkeys are not available on this address yet. An administrator needs to enter this site’s domain and full URL under App settings → Passkeys. If that is already saved, open the exact URL that was registered. localhost does not need this setup.",
     "WEBAUTHN_INVALID_DOMAIN": "Passkeys need a hostname. Open Octop via http://localhost (not an IP address such as 127.0.0.1).",
-    "WEBAUTHN_LOGIN_DISABLED": "Passkey sign-in on the login page is turned off. An administrator can enable it under App settings → Passkeys."
+    "WEBAUTHN_LOGIN_DISABLED": "Passkey sign-in on the login page is turned off. An administrator can enable it under App settings → Passkeys.",
+    "AMOEBA_SOURCE_NOT_CONFIGURED": "The amoeba data source is not configured",
+    "AMOEBA_SYNC_FAILED": "Failed to sync data from the amoeba source",
+    "AMOEBA_METRIC_TAKEN": "A metric with this key already exists",
+    "AMOEBA_METRIC_BAD_FORMULA": "The metric formula is invalid"
   },
   "desktop": {
     "install_log_deps": "Installing Python dependencies…",
@@ -1236,5 +1241,23 @@
     "summary_dry_run": "{migrated} to migrate, {skipped} skipped, {failed} failed.",
     "dry_run_hint": "Dry run: nothing was written. Run again without --dry-run to apply.",
     "restart_hint": "If `octop run` is running, restart it to load the migrated providers and channels."
+  },
+  "amoeba": {
+    "categories": {
+      "core": "Core KPIs",
+      "category": "Sales by category",
+      "profit": "Benefit",
+      "pay": "Instant pay incentives",
+      "discount": "Discounts & operations detail",
+      "ops": "Operations"
+    },
+    "insights": {
+      "system": "You are a business analysis assistant for a fuel-retail amoeba board. Given rolled-up metrics (value, delta %, budget attainment %), write 3-5 short summary lines. Each line must quote concrete numbers, mention trend direction and one actionable suggestion, one line per insight, no bullet markers, no preamble.",
+      "behindBudget": "{name} is {value}{unit}, budget attainment {pct}% — progress is behind, consider pushing it.",
+      "aheadBudget": "{name} is {value}{unit}, budget attainment {pct}% — ahead of plan, keep the momentum.",
+      "declining": "{name} is {value}{unit}, down {pct}% period over period — watch the driver.",
+      "growing": "{name} is {value}{unit}, up {pct}% period over period.",
+      "noSignal": "No notable signals for {org} yet; sync data first."
+    }
   }
 }

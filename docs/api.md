@@ -646,6 +646,26 @@ Example client configuration:
 The exact transport key differs by MCP client. Some clients use `http`
 instead of `streamable_http`.
 
+## Amoeba board (BI dashboard)
+
+Business board over the departments tree; facts are pulled from a configured
+MCP data source (see `docs/amoeba-mcp-source.md`). `dept` params drill into a
+department subtree; users without admin only see their bound subtree.
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `GET`  | `/amoeba/tree` | amoeba | departments visible to the caller |
+| `GET`  | `/amoeba/overview?dept&dim=d|m|y` | amoeba | grouped KPI cards (roll-up sums, derived formulas, deltas/budgets, 7-day spark) |
+| `GET`  | `/amoeba/metrics/{metric_key}?dept&dim` | amoeba | metric drawer: dims, 30-day trend, leaf ranking |
+| `GET`  | `/amoeba/summary?dept&dim` | amoeba | AI summary lines (LLM with rule fallback) |
+| `GET`  | `/amoeba/status` | amoeba | data freshness + source state |
+| `GET`/`PUT` | `/amoeba/source` | admin | MCP source config (url/token/sync schedule) |
+| `POST` | `/amoeba/source/test` | admin | probe source tools |
+| `POST` | `/amoeba/sync` | admin | pull units, snapshots, budgets now |
+| `GET`/`POST` | `/amoeba/metrics` | admin | metric catalog (create custom metrics) |
+| `PATCH`/`DELETE` | `/amoeba/metrics/{metric_key}` | admin | update/disable/delete (builtin → disable) |
+| `GET`/`PUT` | `/amoeba/bindings` | admin | user↔department data-scope bindings |
+
 ## Observability & security
 
 | Method | Path | Auth | Notes |

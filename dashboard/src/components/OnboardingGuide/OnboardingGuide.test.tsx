@@ -55,6 +55,9 @@ describe("OnboardingGuide", () => {
   it("introduces only the pages the user can open", () => {
     renderGuide();
     expect(screen.getByText("onboarding.intro.title")).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog").querySelector("picture img"),
+    ).toHaveAttribute("src", "/kunlun-worker-empty.svg");
     const concepts = screen
       .getAllByRole("listitem")
       .map((li) => li.textContent);
