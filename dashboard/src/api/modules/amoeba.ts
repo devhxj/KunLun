@@ -26,6 +26,8 @@ export interface AmoebaMetricCard {
   note_en: string;
   formula: string;
   dims: Partial<Record<AmoebaDim, number | null>>;
+  // Day-over-day change, monthly budget attainment and year-over-year change.
+  comparisons?: Partial<Record<AmoebaDim, number | null>>;
   delta_pct: number | null;
   delta_kind: "mom" | "yoy" | null;
   budget_value: number | null;
@@ -47,13 +49,32 @@ export interface AmoebaMetricDetail {
   ranking: Array<{ department_id: string; name: string; value: number }>;
 }
 
+export type AmoebaInsightLevel = "risk" | "warn" | "opp" | "info";
+
 export interface AmoebaInsight {
-  text: string;
+  level: AmoebaInsightLevel;
+  title: string;
+  evidence: string;
+  action: string;
   source: "rule" | "llm";
+}
+
+export interface AmoebaNarrative {
+  lead: string;
+  items: AmoebaInsight[];
+}
+
+export interface AmoebaLeafRow {
+  department_id: string;
+  name: string;
+  value: number;
+  delta_pct: number | null;
+  share: number | null;
 }
 
 export interface AmoebaStatus {
   asof: string;
+  source_name?: string;
   last_sync_at: number | null;
   last_sync_at_age_s: number | null;
   source_configured: boolean;
@@ -117,8 +138,16 @@ export const amoebaApi = {
       })}`,
     ),
   summary: (opts: { dept?: string | null; dim: AmoebaDim }) =>
-    request<{ items: AmoebaInsight[] }>(
+    request<AmoebaNarrative>(
       `${path}/summary${qs({ dept: opts.dept, dim: opts.dim })}`,
+    ),
+  leaves: (opts: { metric: string; dept?: string | null; dim: AmoebaDim }) =>
+    request<{ rows: AmoebaLeafRow[] }>(
+      `${path}/leaves${qs({
+        metric: opts.metric,
+        dept: opts.dept,
+        dim: opts.dim,
+      })}`,
     ),
   status: () => request<AmoebaStatus>(`${path}/status`),
   getSource: () => request<AmoebaSourceConfig>(`${path}/source`),

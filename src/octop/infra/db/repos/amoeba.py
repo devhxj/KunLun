@@ -28,6 +28,7 @@ class AmoebaMetricRow:
     note_zh: str
     note_en: str
     format: str
+    agg: str
     color: str
     sort: int
     enabled: bool
@@ -45,6 +46,7 @@ class AmoebaMetricRow:
             note_zh=row["note_zh"],
             note_en=row["note_en"],
             format=row["format"],
+            agg=row["agg"],
             color=row["color"],
             sort=int(row["sort"]),
             enabled=bool(row["enabled"]),
@@ -104,6 +106,7 @@ class AmoebaRepo:
         note_zh: str = "",
         note_en: str = "",
         format: str = "number",
+        agg: str = "sum",
         color: str = "",
         sort: int = 0,
     ) -> AmoebaMetricRow | None:
@@ -111,8 +114,8 @@ class AmoebaRepo:
             with self._db.transaction() as conn:
                 conn.execute(
                     "INSERT INTO amoeba_metrics(metric_key, name_zh, name_en, unit, category, "
-                    "formula, note_zh, note_en, format, color, sort, enabled, builtin) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)",
+                    "formula, note_zh, note_en, format, agg, color, sort, enabled, builtin) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)",
                     (
                         metric_key,
                         name_zh,
@@ -123,6 +126,7 @@ class AmoebaRepo:
                         note_zh,
                         note_en,
                         format,
+                        agg,
                         color,
                         sort,
                     ),
@@ -145,6 +149,7 @@ class AmoebaRepo:
             "note_zh",
             "note_en",
             "format",
+            "agg",
             "color",
             "sort",
             "enabled",
@@ -171,14 +176,15 @@ class AmoebaRepo:
             for m in metrics:
                 conn.execute(
                     "INSERT INTO amoeba_metrics(metric_key, name_zh, name_en, unit, category, "
-                    "formula, note_zh, note_en, format, color, sort, enabled, builtin) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1) "
+                    "formula, note_zh, note_en, format, agg, color, sort, enabled, builtin) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1) "
                     "ON CONFLICT(metric_key) DO UPDATE SET "
                     "name_zh = EXCLUDED.name_zh, name_en = EXCLUDED.name_en, "
                     "unit = EXCLUDED.unit, category = EXCLUDED.category, "
                     "formula = EXCLUDED.formula, note_zh = EXCLUDED.note_zh, "
                     "note_en = EXCLUDED.note_en, "
-                    "format = EXCLUDED.format, color = EXCLUDED.color, sort = EXCLUDED.sort, "
+                    "format = EXCLUDED.format, agg = EXCLUDED.agg, "
+                    "color = EXCLUDED.color, sort = EXCLUDED.sort, "
                     "builtin = 1",
                     (
                         m.metric_key,
@@ -190,6 +196,7 @@ class AmoebaRepo:
                         m.note_zh,
                         m.note_en,
                         m.format,
+                        m.agg,
                         m.color,
                         m.sort,
                     ),
@@ -252,6 +259,37 @@ class AmoebaRepo:
                 "SELECT metric_key, SUM(value) AS total FROM amoeba_snapshots "
                 f"WHERE department_id IN ({dept_ph}) AND metric_key IN ({metric_ph}) "
                 "AND stat_date >= ? AND stat_date <= ? GROUP BY metric_key",
+                params,
+            ).fetchall()
+        return {r["metric_key"]: float(r["total"] or 0.0) for r in rows}
+
+    def last_snapshots(
+        self,
+        department_ids: Sequence[str],
+        metric_keys: Sequence[str],
+        date_from: str,
+        date_to: str,
+    ) -> dict[str, float]:
+        """Point-in-time roll-up: each department's newest window value, summed.
+
+        For stock-like metrics (inventory, gun counts) where summing daily rows
+        would inflate the magnitude.
+        """
+        if not department_ids or not metric_keys:
+            return {}
+        dept_ph = sql_in_placeholders(len(department_ids))
+        metric_ph = sql_in_placeholders(len(metric_keys))
+        params: list[Any] = [*department_ids, *metric_keys, date_from, date_to]
+        with self._db.connect() as conn:
+            rows = conn.execute(
+                "SELECT s.metric_key, SUM(s.value) AS total FROM amoeba_snapshots s "
+                "JOIN (SELECT department_id, metric_key, MAX(stat_date) AS maxd "
+                f"FROM amoeba_snapshots WHERE department_id IN ({dept_ph}) "
+                f"AND metric_key IN ({metric_ph}) AND stat_date >= ? AND stat_date <= ? "
+                "GROUP BY department_id, metric_key) m "
+                "ON s.department_id = m.department_id AND s.metric_key = m.metric_key "
+                "AND s.stat_date = m.maxd "
+                "GROUP BY s.metric_key",
                 params,
             ).fetchall()
         return {r["metric_key"]: float(r["total"] or 0.0) for r in rows}

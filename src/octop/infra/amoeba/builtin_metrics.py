@@ -65,6 +65,7 @@ def _m(
     note_zh: str = "",
     note_en: str = "",
     format: str = "number",
+    agg: str = "sum",
     color: str = "",
     sort: int = 0,
 ) -> AmoebaMetricRow:
@@ -78,6 +79,7 @@ def _m(
         note_zh=note_zh,
         note_en=note_en,
         format=format,
+        agg=agg,
         color=color,
         sort=sort,
         enabled=True,
@@ -87,11 +89,11 @@ def _m(
 
 BUILTIN_METRICS: list[AmoebaMetricRow] = [
     # ---- feeders (hidden; referenced by formulas or sync only) ----
-    _m("guns", "加油枪数", "Fuel guns", unit="把"),
-    _m("chgguns", "充电枪数", "Charging guns", unit="把"),
+    _m("guns", "加油枪数", "Fuel guns", agg="last", unit="把"),
+    _m("chgguns", "充电枪数", "Charging guns", agg="last", unit="把"),
     _m("oilcust", "油品顾客数", "Fuel customers", unit="人"),
     _m("lossvol", "损耗量", "Loss volume", unit="吨"),
-    _m("invcost", "库存金额", "Inventory value", unit="元"),
+    _m("invcost", "库存金额", "Inventory value", agg="last", unit="元"),
     _m("excard", "e享卡量", "e-card volume"),
     _m("dcard", "柴油卡量", "Diesel card volume"),
     _m("chgrev", "充电服务费收入", "Charging service revenue", unit="元"),
@@ -528,7 +530,7 @@ BUILTIN_METRICS: list[AmoebaMetricRow] = [
         formula="invcost/(rev/{{days}}*0.762)",
         sort=10,
     ),
-    _m("deadsku", "未动销商品", "Dead SKUs", unit="个", category="ops", sort=11),
+    _m("deadsku", "未动销商品", "Dead SKUs", agg="last", unit="个", category="ops", sort=11),
 ]
 
 # Metrics the MCP source must be able to serve (everything without a formula).

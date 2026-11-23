@@ -6,6 +6,7 @@ from datetime import date
 from pathlib import Path
 
 from octop.infra.amoeba.aggregate import (
+    build_leaf_wall,
     build_metric_detail,
     build_overview,
     resolve_asof,
@@ -146,6 +147,16 @@ def test_build_overview_windows_and_groups(tmp_path: Path) -> None:
     assert gas_y["dims"]["y"] == 275.0
     assert gas_y["delta_kind"] == "yoy"
     assert round(gas_y["delta_pct"], 4) == round((275.0 / 400.0 - 1) * 100, 4)
+    assert (
+        gas["comparisons"]
+        == gas_m["comparisons"]
+        == gas_y["comparisons"]
+        == {
+            "d": gas["delta_pct"],
+            "m": gas_m["budget_pct"],
+            "y": gas_y["delta_pct"],
+        }
+    )
 
 
 def test_metric_detail_ranks_leaves_only(tmp_path: Path) -> None:
@@ -173,3 +184,82 @@ def test_metric_detail_ranks_leaves_only(tmp_path: Path) -> None:
     # The amoeba and root are not leaves — ranking covers stations only.
     assert ranked == [(ids["st1"], 100.0), (ids["st2"], 40.0)]
     assert [p["value"] for p in detail["trend"]] == [140.0]
+
+
+def test_point_in_time_metrics_take_latest_not_sum(tmp_path: Path) -> None:
+    amoeba, dept_repo = _setup(tmp_path)
+    ids = _tree(dept_repo)
+    # Inventory is a stock metric (agg=last): daily rows 100, 120, 140 must roll
+    # up to the newest value (140), never to the flow sum (360).
+    amoeba.upsert_snapshots(
+        [
+            (ids["st1"], "2026-11-09", "invcost", 100.0),
+            (ids["st1"], "2026-11-10", "invcost", 120.0),
+            (ids["st1"], "2026-11-11", "invcost", 140.0),
+            (ids["st2"], "2026-11-11", "invcost", 60.0),
+            (ids["st1"], "2026-11-11", "rev", 5000.0),
+            (ids["st2"], "2026-11-11", "rev", 3000.0),
+        ]
+    )
+    metrics = amoeba.list_metrics()
+    values = rolled_values(
+        amoeba, [ids["st1"], ids["st2"]], metrics, "2026-11-01", "2026-11-11", 11
+    )
+    assert values["invcost"] == 200.0  # 140 (latest) + 60 (latest)
+    assert values["rev"] == 8000.0  # flow metric still sums
+
+
+def test_leaf_wall_ranks_leaves_with_share(tmp_path: Path) -> None:
+    amoeba, dept_repo = _setup(tmp_path)
+    ids = _tree(dept_repo)
+    amoeba.upsert_snapshots(
+        [
+            (ids["st1"], "2026-11-11", "gas", 300.0),
+            (ids["st1"], "2026-11-11", "chgrev", 840.0),
+            (ids["st1"], "2026-11-11", "kwh", 2000.0),
+            (ids["st2"], "2026-11-11", "gas", 100.0),
+            (ids["st2"], "2026-11-11", "chgrev", 210.0),
+            (ids["st2"], "2026-11-11", "kwh", 500.0),
+        ]
+    )
+    departments = dept_repo.list_all()
+    metrics = amoeba.list_metrics()
+    rows = build_leaf_wall(
+        amoeba,
+        department_ids=[ids["am"], ids["st1"], ids["st2"]],
+        departments=departments,
+        metrics=metrics,
+        metric_key="gas",
+        asof=date(2026, 11, 11),
+        dim="d",
+    )
+    assert rows is not None
+    assert [r["name"] for r in rows] == ["雄楚站", "珞喻站"]
+    assert [r["value"] for r in rows] == [300.0, 100.0]
+    assert [round(float(r["share"]), 2) for r in rows] == [75.0, 25.0]
+
+    # Ratio metrics stay per-leaf correct (0.42 and 0.42 here, not a pooled mix).
+    ratio = build_leaf_wall(
+        amoeba,
+        department_ids=[ids["am"], ids["st1"], ids["st2"]],
+        departments=departments,
+        metrics=metrics,
+        metric_key="chgfee",
+        asof=date(2026, 11, 11),
+        dim="d",
+    )
+    assert ratio is not None
+    assert all(abs(float(r["value"]) - 0.42) < 1e-9 for r in ratio)
+
+    assert (
+        build_leaf_wall(
+            amoeba,
+            department_ids=[ids["am"]],
+            departments=departments,
+            metrics=metrics,
+            metric_key="nope",
+            asof=date(2026, 11, 11),
+            dim="d",
+        )
+        is None
+    )

@@ -38,7 +38,9 @@ async def run_sync(*, services: SharedServices, store: AmoebaSourceSettingsStore
     units = await source.fetch_units(settings.url, token)
     mapping = await loop.run_in_executor(None, _align_departments, services, units)
 
-    metric_keys = await loop.run_in_executor(None, _raw_metric_keys, services)
+    amoeba_repo = services.repos.amoeba_repo
+    metrics = await loop.run_in_executor(None, amoeba_repo.list_metrics)
+    metric_keys = [metric.metric_key for metric in metrics if metric.enabled and not metric.formula]
     date_to = date.today()
     date_from = date_to - timedelta(days=settings.sync_days)
     rows = await source.fetch_metrics_data(
@@ -60,12 +62,16 @@ async def run_sync(*, services: SharedServices, store: AmoebaSourceSettingsStore
             skipped += 1
             continue
         snap_rows.append((dept, stat_date, key, float(value)))
-    amoeba_repo = services.repos.amoeba_repo
     written = await loop.run_in_executor(None, amoeba_repo.upsert_snapshots, snap_rows)
 
-    periods = [date_to.strftime("%Y-%m"), date_to.strftime("%Y")]
+    meta = await source.fetch_meta(settings.url, token)
+    latest = await loop.run_in_executor(None, amoeba_repo.latest_snapshot_date)
+    asof = str((meta or {}).get("asof") or latest or date_to.isoformat())
+    budget_date = latest or date_to.isoformat()
+    periods = [budget_date[:7], budget_date[:4]]
+    budget_keys = [metric.metric_key for metric in metrics if metric.enabled]
     budget_rows_raw = await source.fetch_budgets(
-        settings.url, token, unit_keys=list(mapping), metric_keys=metric_keys, periods=periods
+        settings.url, token, unit_keys=list(mapping), metric_keys=budget_keys, periods=periods
     )
     budget_rows: list[tuple[str, str, str, float]] = []
     for row in budget_rows_raw:
@@ -79,14 +85,8 @@ async def run_sync(*, services: SharedServices, store: AmoebaSourceSettingsStore
         budget_rows.append((dept, period, key, float(value)))
     budgets_written = await loop.run_in_executor(None, amoeba_repo.upsert_budgets, budget_rows)
 
-    meta = await source.fetch_meta(settings.url, token)
-    asof = ""
-    if isinstance(meta, dict) and meta.get("asof"):
-        asof = str(meta["asof"])
-    if not asof:
-        latest = await loop.run_in_executor(None, amoeba_repo.latest_snapshot_date)
-        asof = latest or date_to.isoformat()
-    await loop.run_in_executor(None, lambda: store.record_sync(asof=asof))
+    source_name = str((meta or {}).get("source_name") or "")
+    await loop.run_in_executor(None, lambda: store.record_sync(asof=asof, source_name=source_name))
     return {
         "units": len(mapping),
         "snapshot_rows": written,
@@ -94,11 +94,6 @@ async def run_sync(*, services: SharedServices, store: AmoebaSourceSettingsStore
         "skipped_rows": skipped,
         "asof": asof,
     }
-
-
-def _raw_metric_keys(services: SharedServices) -> list[str]:
-    metrics = services.repos.amoeba_repo.list_metrics()
-    return [m.metric_key for m in metrics if not m.formula and m.enabled]
 
 
 def _align_departments(services: SharedServices, units: list[dict[str, Any]]) -> dict[str, str]:

@@ -16,6 +16,7 @@ _KEY_SYNC_DAYS = "amoeba_sync_days"
 _KEY_AUTO_SYNC = "amoeba_auto_sync"
 _KEY_SYNC_SCHEDULE = "amoeba_sync_schedule"
 _KEY_ASOF = "amoeba_asof"
+_KEY_SOURCE_NAME = "amoeba_source_name"
 _KEY_LAST_SYNC = "amoeba_last_sync_at"
 _SECRET_TOKEN = "amoeba_source_token"
 
@@ -97,10 +98,11 @@ class AmoebaSourceSettingsStore:
             return None
         return open_secret_bytes(self._secrets, PURPOSE_SETTINGS, raw).decode("utf-8")
 
-    def record_sync(self, *, asof: str) -> None:
+    def record_sync(self, *, asof: str, source_name: str = "") -> None:
         import time
 
         self._settings.set(_KEY_ASOF, asof)
+        self._settings.set(_KEY_SOURCE_NAME, source_name)
         self._settings.set(_KEY_LAST_SYNC, str(int(time.time())))
 
     def status(self) -> dict[str, Any]:
@@ -109,6 +111,7 @@ class AmoebaSourceSettingsStore:
         last = _parse_int(self._settings.get(_KEY_LAST_SYNC), 0)
         return {
             "asof": self._settings.get(_KEY_ASOF) or "",
+            "source_name": self._settings.get(_KEY_SOURCE_NAME) or "",
             "last_sync_at": last or None,
             "last_sync_at_age_s": max(0, int(time.time()) - last) if last else None,
         }

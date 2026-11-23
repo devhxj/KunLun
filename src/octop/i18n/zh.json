@@ -1252,12 +1252,29 @@
       "ops": "运营类"
     },
     "insights": {
-      "system": "你是加油站阿米巴看板的经营分析助手。根据给定的上卷指标（数值、涨跌幅、预算达成率），输出 3-5 条简短小结：每条引用具体数值、指出趋势方向并给一条可执行建议，一行一条，不要列表符号，不要开场白。",
-      "behindBudget": "{name} {value}{unit}，预算达成 {pct}%，进度偏慢，建议加大推进力度。",
-      "aheadBudget": "{name} {value}{unit}，预算达成 {pct}%，已超进度，保持势头。",
-      "declining": "{name} {value}{unit}，较上期下降 {pct}%，需关注驱动因素。",
-      "growing": "{name} {value}{unit}，较上期增长 {pct}%。",
-      "noSignal": "{org} 暂无值得关注的信号，请先同步数据。"
+      "system": "你是加油站阿米巴看板的经营分析助手。根据上卷指标（数值、涨跌幅、预算达成率），仅输出一个 JSON 数组，含 3-6 条洞察对象：[{\"level\": \"risk|warn|opp|info\", \"title\": \"简短问题标题\", \"evidence\": \"一句话引用具体数值\", \"action\": \"一条可执行建议\"}]。risk=预算严重落后或双位数下滑；warn=小幅落后；opp=超预算或增长。JSON 之外不要输出任何文字。",
+      "lead": {
+        "profit": "当期利润总额 {value}（对比 {trend}%、预算达成 {budget}%）—— 本看板的第一主线。",
+        "revenue": "当期收入 {value}（对比 {trend}%）。",
+        "empty": "暂无数据，请先配置数据源并同步。"
+      },
+      "titles": {
+        "behindBudget": "{name} 进度偏慢",
+        "aheadBudget": "{name} 超出预算",
+        "declining": "{name} 下滑",
+        "growing": "{name} 增长",
+        "noSignal": "暂无显著信号"
+      },
+      "evidence": {
+        "valueBudget": "当期 {value}{unit}，预算达成 {pct}%",
+        "valueDelta": "当期 {value}{unit}，较对比期 {pct}%",
+        "noSignal": "{org} 暂无可关注信号"
+      },
+      "actions": {
+        "push": "加大推进力度：营销活动、定价或分站目标。",
+        "keep": "保持势头，复制有效打法。",
+        "watch": "关注驱动因素，排查异常站点。"
+      }
     }
   }
 }

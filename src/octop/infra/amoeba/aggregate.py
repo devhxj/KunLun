@@ -75,7 +75,11 @@ def rolled_values(
     """Absolute-value roll-up for one window: raw SUMs plus derived evaluation."""
     raw_keys = [m.metric_key for m in metrics if not m.formula]
     values: dict[str, float | None] = dict.fromkeys(raw_keys, 0.0)
-    values.update(repo.sum_snapshots(department_ids, raw_keys, date_from, date_to))
+    sum_keys = [m.metric_key for m in metrics if not m.formula and m.agg != "last"]
+    last_keys = [m.metric_key for m in metrics if not m.formula and m.agg == "last"]
+    values.update(repo.sum_snapshots(department_ids, sum_keys, date_from, date_to))
+    if last_keys:
+        values.update(repo.last_snapshots(department_ids, last_keys, date_from, date_to))
     return _resolve_derived(values, metrics, days)
 
 
@@ -183,12 +187,19 @@ def build_overview(
     window_values = {
         d: rolled_values(repo, department_ids, metrics, *_window(asof, d)) for d in DIMS
     }
-    prev = _prev_window(asof, dim)
-    prev_values = rolled_values(repo, department_ids, metrics, *prev) if prev else {}
+    baselines = {
+        period: rolled_values(repo, department_ids, metrics, *window)
+        for period in ("d", "y")
+        if (window := _prev_window(asof, period)) is not None
+    }
+    visible_keys = [metric.metric_key for metric in visible]
+    monthly_budgets = repo.sum_budgets(department_ids, visible_keys, asof.strftime("%Y-%m"))
     budget_period = _budget_period(asof, dim)
     budgets = (
-        repo.sum_budgets(department_ids, [m.metric_key for m in visible], budget_period)
-        if budget_period
+        repo.sum_budgets(department_ids, visible_keys, budget_period)
+        if dim == "y" and budget_period
+        else monthly_budgets
+        if dim == "m"
         else {}
     )
     spark_from = (asof - timedelta(days=SPARK_DAYS - 1)).isoformat()
@@ -199,24 +210,32 @@ def build_overview(
 
     cards: dict[str, dict[str, object]] = {}
     for m in visible:
-        value = window_values[dim].get(m.metric_key)
-        base = prev_values.get(m.metric_key)
+        values = {period: window_values[period].get(m.metric_key) for period in DIMS}
+        value = values[dim]
         budget = budgets.get(m.metric_key)
-        if dim == "m":
-            delta_pct, delta_kind = None, None
-        else:
-            delta_pct = _delta(value, base)
-            delta_kind = "mom" if dim == "d" else "yoy"
+        comparisons = {
+            period: _delta(values[period], baseline.get(m.metric_key))
+            for period, baseline in baselines.items()
+        }
+        monthly_value = values["m"]
+        monthly_budget = monthly_budgets.get(m.metric_key)
+        comparisons["m"] = (
+            monthly_value / monthly_budget * 100
+            if monthly_value is not None and monthly_budget
+            else None
+        )
         budget_pct = (value / budget * 100.0) if value is not None and budget else None
-        cards[m.metric_key] = _card(
+        card = _card(
             m,
-            {d: window_values[d].get(m.metric_key) for d in DIMS},
-            delta_pct=delta_pct,
-            delta_kind=delta_kind,
+            values,
+            delta_pct=comparisons[dim] if dim != "m" else None,
+            delta_kind={"d": "mom", "y": "yoy"}.get(dim),
             budget_value=budget,
             budget_pct=budget_pct,
             spark=sparks.get(m.metric_key),
         )
+        card["comparisons"] = comparisons
+        cards[m.metric_key] = card
 
     known = set(cards)
     groups: list[dict[str, object]] = []
@@ -287,16 +306,10 @@ def build_metric_detail(
         # Rank leaves by the metric itself: sum each leaf's raw closure, then
         # evaluate the formula per leaf (ratio metrics stay per-leaf correct).
         date_from, date_to, rank_days = _window(asof, dim)
-        raw_keys = [m.metric_key for m in wanted if not m.formula]
-        per_leaf: dict[str, dict[str, float | None]] = {
-            dept: dict.fromkeys(raw_keys, 0.0) for dept in children
-        }
-        for dept, key, val in repo.sum_by_department(children, raw_keys, date_from, date_to):
-            per_leaf[dept][key] = val
         names = {d.department_id: d.name for d in departments}
         ranked: list[tuple[str, str, float]] = []
         for dept in children:
-            resolved = _resolve_derived(per_leaf[dept], wanted, rank_days)
+            resolved = rolled_values(repo, [dept], wanted, date_from, date_to, rank_days)
             value = resolved.get(metric.metric_key)
             if value is not None:
                 ranked.append((dept, names.get(dept, dept), value))
@@ -324,6 +337,58 @@ def build_metric_detail(
         "trend": trend,
         "ranking": ranking,
     }
+
+
+def build_leaf_wall(
+    repo: AmoebaRepo,
+    *,
+    department_ids: list[str],
+    departments: list[DepartmentRow],
+    metrics: list[AmoebaMetricRow],
+    metric_key: str,
+    asof: date,
+    dim: str,
+) -> list[dict[str, object]] | None:
+    """Per-leaf comparison wall: value, delta and share for one metric.
+
+    Each leaf is rolled up independently (per-leaf ratios stay correct); the
+    share is the leaf's fraction of the scope total.
+    """
+    metric = next((m for m in metrics if m.metric_key == metric_key), None)
+    if metric is None:
+        return None
+    wanted = _closure_for(metric, metrics)
+    date_from, date_to, days = _window(asof, dim)
+    prev = _prev_window(asof, dim)
+    names = {d.department_id: d.name for d in departments}
+    leaves = _leaf_scope(departments, department_ids)
+    if not leaves:
+        return []
+    scored: list[tuple[float, dict[str, object]]] = []
+    for leaf in leaves:
+        leaf_values = rolled_values(repo, [leaf], wanted, date_from, date_to, days)
+        value = leaf_values.get(metric.metric_key)
+        if value is None:
+            continue
+        prev_values = rolled_values(repo, [leaf], wanted, *prev) if prev else {}
+        scored.append(
+            (
+                value,
+                {
+                    "department_id": leaf,
+                    "name": names.get(leaf, leaf),
+                    "value": value,
+                    "delta_pct": _delta(value, prev_values.get(metric.metric_key)),
+                },
+            )
+        )
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    total = sum(value for value, _row in scored)
+    rows: list[dict[str, object]] = []
+    for value, row in scored:
+        row["share"] = value / total * 100.0 if total else None
+        rows.append(row)
+    return rows
 
 
 def _closure_for(metric: AmoebaMetricRow, metrics: list[AmoebaMetricRow]) -> list[AmoebaMetricRow]:
@@ -360,6 +425,7 @@ __all__ = [
     "DIMS",
     "SPARK_DAYS",
     "TREND_DAYS",
+    "build_leaf_wall",
     "build_metric_detail",
     "build_overview",
     "resolve_asof",

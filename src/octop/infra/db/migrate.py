@@ -20,7 +20,7 @@ _MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 _SQL_STMT_RE = re.compile(r";\s*\n")
 
 
-def _split_pg_sql(sql: str) -> list[str]:
+def _split_sql_statements(sql: str) -> list[str]:
     parts = [p.strip() for p in _SQL_STMT_RE.split(sql)]
     out: list[str] = []
     for part in parts:
@@ -2084,7 +2084,7 @@ def _reconcile_pre_squash_schema_version(db: DatabasePool) -> None:
 
 
 def _apply_postgresql_migration(conn: Any, sql: str) -> None:
-    for stmt in _split_pg_sql(sql):
+    for stmt in _split_sql_statements(sql):
         conn.execute(stmt)
 
 
@@ -2265,6 +2265,16 @@ def _apply_sqlite_migration(db: DatabasePool, version: int, path: Path) -> None:
             conn.execute("UPDATE _schema_version SET version = ?", (version,))
         return
     sql = path.read_text(encoding="utf-8")
+    if version == 29:
+        add_column, *updates = _split_sql_statements(sql)
+        with db.transaction() as conn:
+            # Some demo databases created at v28 already have the new column.
+            columns = conn.execute("PRAGMA table_info(amoeba_metrics)").fetchall()
+            if not any(row["name"] == "agg" for row in columns):
+                conn.execute(add_column)
+            for statement in updates:
+                conn.execute(statement)
+        return
     with db.connect() as conn:
         conn.executescript(sql)
 

@@ -12,6 +12,7 @@ from octop.api.deps import current_user, get_server, require_admin, require_perm
 from octop.infra.amoeba import source as amoeba_source
 from octop.infra.amoeba import sync as amoeba_sync
 from octop.infra.amoeba.aggregate import (
+    build_leaf_wall,
     build_metric_detail,
     build_overview,
     resolve_asof,
@@ -193,24 +194,64 @@ async def get_summary(
     departments = await _run(_dept_repo(server).list_all)
     scope = await _run(_scope_ids, user=user, repo=repo, dept=dept, departments=departments)
     if not scope:
-        return {"items": []}
+        return {"lead": "", "items": []}
     metrics = await _run(repo.list_metrics)
     asof = await _run(resolve_asof, repo)
     if asof is None:
-        return {"items": []}
+        return {"lead": "", "items": []}
     overview = await _run(
         build_overview, repo, department_ids=scope, metrics=metrics, asof=asof, dim=dim
     )
     names = {d.department_id: d.name for d in departments if d.department_id in set(scope)}
     org_name = names.get(dept or "", next(iter(names), "") if names else "")
     locale = resolve_request_locale(request)
-    items = await build_insights(
+    narrative = await build_insights(
         overview=overview,
         locale=locale,
         org_name=org_name,
         models=_soft_host_models(server),
     )
-    return {"items": items}
+    return narrative
+
+
+@router.get(
+    "/leaves",
+    summary="Leaf-unit comparison wall for one metric",
+    description="Value, delta and share per leaf department in scope — the peer-comparison view.",
+)
+async def get_leaves(
+    metric: str = Query(default="oil"),
+    dept: str | None = Query(default=None),
+    dim: Literal["d", "m", "y"] = Query(default="d"),
+    user: Any = Depends(current_user),
+    _: Any = Depends(require_permission("amoeba")),
+    server: Any = Depends(get_server),
+) -> dict[str, Any]:
+    repo = _repo(server)
+    await _run(_ensure_catalog, server)
+    metrics = await _run(repo.list_metrics)
+    if not any(m.metric_key == metric for m in metrics):
+        raise OctopError(ErrorCode.NOT_FOUND, "metric not found")
+    departments = await _run(_dept_repo(server).list_all)
+    scope = await _run(_scope_ids, user=user, repo=repo, dept=dept, departments=departments)
+    if not scope:
+        return {"rows": []}
+    asof = await _run(resolve_asof, repo)
+    if asof is None:
+        return {"rows": []}
+    rows = await _run(
+        build_leaf_wall,
+        repo,
+        department_ids=scope,
+        departments=departments,
+        metrics=metrics,
+        metric_key=metric,
+        asof=asof,
+        dim=dim,
+    )
+    if rows is None:
+        raise OctopError(ErrorCode.NOT_FOUND, "metric not found")
+    return {"rows": rows}
 
 
 @router.get("/status", summary="Board data freshness and source state")
@@ -336,6 +377,9 @@ class AmoebaMetricBody(BaseModel):
     note_zh: str = ""
     note_en: str = ""
     format: Literal["number", "percent", "money"] = "number"
+    agg: Literal["sum", "last"] = Field(
+        default="sum", description="sum = flow metric, last = point-in-time metric"
+    )
     color: str = ""
     sort: int = 0
     enabled: bool = True
@@ -350,6 +394,7 @@ class AmoebaMetricPatch(BaseModel):
     note_zh: str | None = None
     note_en: str | None = None
     format: Literal["number", "percent", "money"] | None = None
+    agg: Literal["sum", "last"] | None = None
     color: str | None = None
     sort: int | None = None
     enabled: bool | None = None
@@ -373,6 +418,7 @@ async def list_metrics_admin(
                 "note_zh": m.note_zh,
                 "note_en": m.note_en,
                 "format": m.format,
+                "agg": m.agg,
                 "color": m.color,
                 "sort": m.sort,
                 "enabled": m.enabled,
@@ -415,6 +461,7 @@ async def create_metric(
             note_zh=body.note_zh,
             note_en=body.note_en,
             format=body.format,
+            agg=body.agg,
             color=body.color,
             sort=body.sort,
         )

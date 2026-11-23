@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from octop.infra.amoeba.builtin_metrics import BUILTIN_METRICS, ensure_builtin_metrics
 from octop.infra.db.migrate import run_migrations
 from octop.infra.db.pool import SqlitePool
@@ -15,6 +17,32 @@ def _db(tmp_path: Path) -> SqlitePool:
     db = SqlitePool(tmp_path / "octop.db")
     run_migrations(db)
     return db
+
+
+@pytest.mark.parametrize("already_has_agg", [False, True])
+def test_migrate_v28_metric_aggregation(tmp_path: Path, already_has_agg: bool) -> None:
+    db = _db(tmp_path)
+    with db.connect() as conn:
+        conn.execute("UPDATE _schema_version SET version = 28")
+        conn.execute(
+            "INSERT INTO amoeba_metrics(metric_key, name_zh, name_en, category, builtin) "
+            "VALUES ('invcost', '库存金额', 'Inventory value', 'ops', 1), "
+            "('custom', '自定义', 'Custom', 'ops', 0)"
+        )
+        if already_has_agg:
+            conn.execute("UPDATE amoeba_metrics SET agg = 'last' WHERE metric_key = 'custom'")
+        else:
+            conn.execute("ALTER TABLE amoeba_metrics DROP COLUMN agg")
+
+    run_migrations(db)
+    run_migrations(db)
+
+    with db.connect() as conn:
+        assert conn.execute("SELECT version FROM _schema_version").fetchone()[0] == 29
+    assert {row.metric_key: row.agg for row in AmoebaRepo(db).list_metrics()} == {
+        "invcost": "last",
+        "custom": "last" if already_has_agg else "sum",
+    }
 
 
 def test_snapshot_upsert_overwrites_and_subtree_filters(tmp_path: Path) -> None:

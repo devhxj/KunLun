@@ -219,3 +219,41 @@ async def test_amoeba_source_config_and_metric_admin(env_admin_client) -> None:
     sync = await client.post("/api/amoeba/sync", headers=auth)
     assert sync.status_code == 400
     assert sync.json()["error"]["code"] == "AMOEBA_SOURCE_NOT_CONFIGURED"
+
+
+async def test_amoeba_leaves_wall_and_narrative_shape(env_admin_client) -> None:
+    client, auth = env_admin_client
+    depts = await client.post("/api/departments", headers=auth, json={"name": "全省"})
+    root_id = depts.json()["department_id"]
+    st1 = await client.post(
+        "/api/departments", headers=auth, json={"name": "雄楚站", "parent_id": root_id}
+    )
+    st2 = await client.post(
+        "/api/departments", headers=auth, json={"name": "珞喻站", "parent_id": root_id}
+    )
+    assert st1.status_code == 201 and st2.status_code == 201, (st1.text, st2.text)
+
+    # The board seeds builtin metrics lazily; trigger it via the overview call.
+    overview = await client.get("/api/amoeba/overview", headers=auth)
+    assert overview.status_code == 200, overview.text
+
+    leaves = await client.get(
+        "/api/amoeba/leaves", headers=auth, params={"metric": "oil", "dim": "m"}
+    )
+    assert leaves.status_code == 200, leaves.text
+    # No synced facts in this env → the wall is a well-formed empty list.
+    assert leaves.json() == {"rows": []}
+
+    missing = await client.get(
+        "/api/amoeba/leaves", headers=auth, params={"metric": "nope", "dim": "m"}
+    )
+    assert missing.status_code == 404
+
+    narrative = await client.get("/api/amoeba/summary", headers=auth, params={"dim": "m"})
+    assert narrative.status_code == 200, narrative.text
+    body = narrative.json()
+    assert set(body) == {"lead", "items"}
+    assert isinstance(body["lead"], str)
+    for item in body["items"]:
+        assert set(item) >= {"level", "title", "evidence", "action", "source"}
+        assert item["level"] in {"risk", "warn", "opp", "info"}

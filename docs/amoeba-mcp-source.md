@@ -133,8 +133,10 @@ arithmetic formula over existing keys.
 
 ## Calibre (computed on the Octop side)
 
-- **Roll-up**: any parent view is the `SUM` over its subtree; facts belong on
-  leaf units.
+- **Roll-up**: facts belong on leaf units. Flow metrics (`agg: sum`) add
+  values across dates and units. Snapshot metrics (`agg: last`), such as
+  inventory value and fuel gun counts, take each leaf unit's latest value
+  within the window and then sum those values across the subtree.
 - **Ratios recomputed after roll-up** — per-unit ratio metrics are never
   averaged across units.
 - **Dimensions**: `d` = the as-of day (compares to the previous day), `m` =

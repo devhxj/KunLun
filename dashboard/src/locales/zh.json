@@ -3025,10 +3025,6 @@
     "telegramAllowedUsers": "允许的 Telegram 用户 ID（逗号或换行分隔）",
     "telegramAllowedUsersHelp": "仅这些数字用户 ID 可以与机器人对话（私聊和群聊均生效）。留空则任何找到该机器人的人都能使用。"
   },
-  "amoeba": {
-    "title": "阿米巴看板",
-    "subtitle": "三级组织穿透：日 / 月 / 年经营总览，预算达成与趋势"
-  },
   "tokenUsage": {
     "title": "Token 消耗统计",
     "description": "分析各渠道和会话的 Token 消耗趋势",
@@ -7634,6 +7630,10 @@
     "menuHint": "↑↓ 选择 · Enter 确认 · Esc 关闭"
   },
   "pageShell": {
+    "amoeba": {
+      "title": "阿米巴看板",
+      "subtitle": "三级组织穿透：日 / 月 / 年经营总览，预算达成与趋势"
+    },
     "experts": {
       "title": "专家",
       "subtitle": "创建与管理你的 AI 专家，也可从模板一键新建"
@@ -8092,6 +8092,37 @@
     "emptyResult": "模型未返回结果"
   },
   "amoeba": {
+    "workspace": {
+      "metricNavigation": "指标导航",
+      "quickRead": "关键数据速览",
+      "tonnes": "吨",
+      "quickMetrics": {
+        "dailyOil": "日均油品销量",
+        "fuelMix": "汽柴比",
+        "gasDiscount": "汽油吨折",
+        "nonFuelMargin": "非油毛利率",
+        "nonFuelPerTonne": "吨油非油收入",
+        "conversion": "油非转换率",
+        "oilBudget": "油品月预算达成",
+        "monthlyPay": "月绩效"
+      },
+      "region": "湖北 · 武汉",
+      "organization": "组织范围",
+      "period": "统计周期",
+      "dataDate": "数据日期 {{date}}",
+      "sampleData": "模拟数据",
+      "trend": "近期经营走势",
+      "trendMetric": "趋势指标",
+      "trendEmpty": "暂无趋势数据",
+      "dailyBrief": "经营速览",
+      "nonFuel": "非油经营",
+      "tabs": {
+        "overview": "经营总览",
+        "sales": "销售与非油",
+        "profit": "效益与薪酬",
+        "operations": "运营与折扣"
+      }
+    },
     "dim": {
       "d": "日",
       "m": "月",
@@ -8100,17 +8131,19 @@
     "mom": "环比",
     "yoy": "同比",
     "budget": "预算",
-    "asof": "数据截至 {date} 24:00",
+    "asof": "数据截至 {{date}} 24:00",
     "empty": "暂无看板数据，请先配置 MCP 数据源并执行同步。",
     "restricted": "当前展示绑定到你账号的部门范围。",
     "tree": {
       "search": "搜索部门…",
       "all": "全部部门",
-      "empty": "暂无可见部门"
+      "empty": "暂无可见部门",
+      "caption": "组织架构 · 点击切换视图"
     },
     "summary": {
       "title": "智能小结",
-      "rule": "规则"
+      "rule": "规则",
+      "hint": "基于进度与涨跌自动生成"
     },
     "drawer": {
       "title": "指标详情",
@@ -8120,7 +8153,9 @@
     },
     "discount": {
       "item": "折扣项",
-      "rule": "分摊规则"
+      "rule": "分摊规则",
+      "share": "占比",
+      "total": "合计"
     },
     "categories": {
       "core": "核心指标",
@@ -8128,7 +8163,9 @@
       "profit": "效益类",
       "pay": "即时薪酬",
       "discount": "折扣与运营明细",
-      "ops": "运营类"
+      "ops": "运营类",
+      "ai": "智能小结",
+      "wall": "分单元横向对比"
     },
     "admin": {
       "title": "看板管理",
@@ -8143,15 +8180,51 @@
       "autoSync": "每日自动同步",
       "syncSchedule": "同步计划（cron）",
       "test": "测试",
-      "testOk": "数据源可达 —— 可用工具 {count} 个",
-      "testMissing": "缺少必需工具：{tools}",
+      "testOk": "数据源可达 —— 可用工具 {{count}} 个",
+      "testMissing": "缺少必需工具：{{tools}}",
       "testFailed": "连通性测试失败",
       "syncNow": "立即同步",
-      "syncOk": "已同步 {units} 个单元 / {rows} 行，数据截至 {asof}",
+      "syncOk": "已同步 {{units}} 个单元 / {{rows}} 行，数据截至 {{asof}}",
       "syncFailed": "同步失败",
       "bindings": "数据权限绑定",
       "bindingsHint": "将用户绑定到部门；普通用户只能看到绑定部门的子树，管理员可见全部。",
       "selectUser": "选择用户"
+    },
+    "strip": {
+      "org": "当前组织",
+      "units": "范围内单元",
+      "progress": "当期第"
+    },
+    "pay": {
+      "slogan": "双线驱动 · 日更新 · 月汇总兑现",
+      "today": "今日",
+      "yearTotal": "年累计",
+      "monthPayout": "月绩效综合",
+      "oilPayout": "油气兑现（本月）",
+      "nonPayout": "非油兑现（本月）",
+      "progress": "月预算达成",
+      "monthBudget": "预算"
+    },
+    "section": {
+      "hint": "点击任意指标卡查看走势与分单元明细"
+    },
+    "insights": {
+      "levels": {
+        "risk": "风险",
+        "warn": "关注",
+        "opp": "机会",
+        "info": "信息"
+      },
+      "wall": {
+        "title": "分单元横向对比",
+        "hint": "按所选指标对叶子单元排名，点击卡片下钻",
+        "metric": "指标"
+      },
+      "takeaway": {
+        "label": "本段小结",
+        "sub": "SECTION SUMMARY",
+        "body": "{{name1}} {{delta1}} vs {{name2}} {{delta2}} —— {{name2}} 领跑、{{name1}} 承压。"
+      }
     }
   }
 }

@@ -1252,12 +1252,29 @@
       "ops": "Operations"
     },
     "insights": {
-      "system": "You are a business analysis assistant for a fuel-retail amoeba board. Given rolled-up metrics (value, delta %, budget attainment %), write 3-5 short summary lines. Each line must quote concrete numbers, mention trend direction and one actionable suggestion, one line per insight, no bullet markers, no preamble.",
-      "behindBudget": "{name} is {value}{unit}, budget attainment {pct}% — progress is behind, consider pushing it.",
-      "aheadBudget": "{name} is {value}{unit}, budget attainment {pct}% — ahead of plan, keep the momentum.",
-      "declining": "{name} is {value}{unit}, down {pct}% period over period — watch the driver.",
-      "growing": "{name} is {value}{unit}, up {pct}% period over period.",
-      "noSignal": "No notable signals for {org} yet; sync data first."
+      "system": "You are a business analysis assistant for an amoeba board. Given rolled-up metrics (value, delta %, budget attainment %), output ONLY a JSON array of 3-6 insight objects: [{\"level\": \"risk|warn|opp|info\", \"title\": \"short issue title\", \"evidence\": \"one sentence quoting concrete numbers\", \"action\": \"one actionable suggestion\"}]. risk = seriously behind budget or double-digit decline; warn = slightly behind; opp = ahead of budget or growing. No prose outside the JSON.",
+      "lead": {
+        "profit": "Total profit {value} this period ({trend}% vs comparison, budget attainment {budget}%) — the headline of this board.",
+        "revenue": "Revenue {value} this period ({trend}% vs comparison).",
+        "empty": "No data yet; configure the source and sync first."
+      },
+      "titles": {
+        "behindBudget": "{name} behind budget",
+        "aheadBudget": "{name} ahead of budget",
+        "declining": "{name} declining",
+        "growing": "{name} growing",
+        "noSignal": "No notable signals"
+      },
+      "evidence": {
+        "valueBudget": "{value}{unit} in period, budget attainment {pct}%",
+        "valueDelta": "{value}{unit} in period, {pct}% vs comparison",
+        "noSignal": "Nothing to highlight for {org} yet"
+      },
+      "actions": {
+        "push": "Push the drivers — campaign, pricing or site-level targets.",
+        "keep": "Keep the momentum and replicate what works.",
+        "watch": "Watch the driver and check site-level outliers."
+      }
     }
   }
 }

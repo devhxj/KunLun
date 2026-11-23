@@ -568,7 +568,7 @@ Module boundaries and coding conventions: [AGENTS.md](AGENTS.md).
 
 ## 📋 Changelog
 
-The latest changes add the Amoeba operations dashboard and department management, update the web console to KunLun branding, and document Windows service setup with Servy.
+The KunLun Amoeba dashboard brings key figures, daily, monthly and yearly comparisons, trends, and rankings together on one page. Use the right-hand indicator navigation to jump between sections. A local MCP stub can populate existing Hubei branches with labeled sample data for provincial rollups.
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
 

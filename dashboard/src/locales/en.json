@@ -3025,10 +3025,6 @@
     "telegramAllowedUsers": "Allowed Telegram user IDs (comma or newline separated)",
     "telegramAllowedUsersHelp": "Only these numeric user IDs can talk to the bot, in private chats and groups. Leave empty to let anyone who finds the bot use it."
   },
-  "amoeba": {
-    "title": "Amoeba board",
-    "subtitle": "Three-level business roll-ups: org tree, day/month/year, budget and trend"
-  },
   "tokenUsage": {
     "title": "Token Usage Analytics",
     "description": "Analyze token consumption trends across channels and sessions",
@@ -7634,6 +7630,10 @@
     "menuHint": "↑↓ navigate · Enter confirm · Esc close"
   },
   "pageShell": {
+    "amoeba": {
+      "title": "Amoeba board",
+      "subtitle": "Three-level business roll-ups: org tree, day/month/year, budget and trend"
+    },
     "experts": {
       "title": "Experts",
       "subtitle": "Create and manage your AI experts, or spin one up from a template"
@@ -8092,6 +8092,37 @@
     "emptyResult": "The model returned an empty result"
   },
   "amoeba": {
+    "workspace": {
+      "metricNavigation": "Indicator navigation",
+      "quickRead": "Key figures at a glance",
+      "tonnes": "t",
+      "quickMetrics": {
+        "dailyOil": "Daily average fuel sales",
+        "fuelMix": "Gasoline / diesel ratio",
+        "gasDiscount": "Gasoline discount per tonne",
+        "nonFuelMargin": "Non-fuel gross margin",
+        "nonFuelPerTonne": "Non-fuel revenue per tonne",
+        "conversion": "Fuel-to-retail conversion",
+        "oilBudget": "Monthly fuel budget attainment",
+        "monthlyPay": "Monthly performance pay"
+      },
+      "region": "Wuhan, Hubei",
+      "organization": "Organization scope",
+      "period": "Reporting period",
+      "dataDate": "Data date {{date}}",
+      "sampleData": "Simulated data",
+      "trend": "Recent performance",
+      "trendMetric": "Trend metric",
+      "trendEmpty": "No trend data available",
+      "dailyBrief": "Performance brief",
+      "nonFuel": "Non-fuel operations",
+      "tabs": {
+        "overview": "Overview",
+        "sales": "Sales & retail",
+        "profit": "Profit & pay",
+        "operations": "Operations & discounts"
+      }
+    },
     "dim": {
       "d": "Day",
       "m": "Month",
@@ -8100,17 +8131,19 @@
     "mom": "DoD",
     "yoy": "YoY",
     "budget": "budget",
-    "asof": "Data as of {date} 24:00",
+    "asof": "Data as of {{date}} 24:00",
     "empty": "No board data yet. Configure the MCP source and run a sync first.",
     "restricted": "You are viewing the departments bound to your account.",
     "tree": {
       "search": "Search department…",
       "all": "All departments",
-      "empty": "No departments visible"
+      "empty": "No departments visible",
+      "caption": "Org structure · click to switch"
     },
     "summary": {
       "title": "AI summary",
-      "rule": "Rule"
+      "rule": "Rule",
+      "hint": "Auto-generated from progress and deltas"
     },
     "drawer": {
       "title": "Metric detail",
@@ -8120,7 +8153,9 @@
     },
     "discount": {
       "item": "Discount item",
-      "rule": "Allocation rule"
+      "rule": "Allocation rule",
+      "share": "Share",
+      "total": "Total"
     },
     "categories": {
       "core": "Core KPIs",
@@ -8128,7 +8163,9 @@
       "profit": "Benefit",
       "pay": "Instant pay incentives",
       "discount": "Discounts & operations detail",
-      "ops": "Operations"
+      "ops": "Operations",
+      "ai": "AI summary",
+      "wall": "Unit peer comparison"
     },
     "admin": {
       "title": "Amoeba admin",
@@ -8143,15 +8180,51 @@
       "autoSync": "Daily auto sync",
       "syncSchedule": "Sync schedule (cron)",
       "test": "Test",
-      "testOk": "Source reachable — {count} tools available",
-      "testMissing": "Missing required tools: {tools}",
+      "testOk": "Source reachable — {{count}} tools available",
+      "testMissing": "Missing required tools: {{tools}}",
       "testFailed": "Connection test failed",
       "syncNow": "Sync now",
-      "syncOk": "Synced {units} units / {rows} rows, as of {asof}",
+      "syncOk": "Synced {{units}} units / {{rows}} rows, as of {{asof}}",
       "syncFailed": "Sync failed",
       "bindings": "Data scope bindings",
       "bindingsHint": "Bind users to departments; a user sees the bound department subtree only (admins see everything).",
       "selectUser": "Select user"
+    },
+    "strip": {
+      "org": "Org",
+      "units": "Units in scope",
+      "progress": "Period day"
+    },
+    "pay": {
+      "slogan": "Dual-track · daily updates · monthly payout",
+      "today": "Today",
+      "yearTotal": "Year",
+      "monthPayout": "Monthly performance pay",
+      "oilPayout": "Fuel payout (month)",
+      "nonPayout": "Non-fuel payout (month)",
+      "progress": "Monthly budget attainment",
+      "monthBudget": "budget"
+    },
+    "section": {
+      "hint": "Click any card for trend & leaf ranking"
+    },
+    "insights": {
+      "levels": {
+        "risk": "Risk",
+        "warn": "Watch",
+        "opp": "Opportunity",
+        "info": "Info"
+      },
+      "wall": {
+        "title": "Unit peer comparison",
+        "hint": "Leaf units ranked by the selected metric; click a card to drill in",
+        "metric": "Metric"
+      },
+      "takeaway": {
+        "label": "Takeaway",
+        "sub": "SECTION SUMMARY",
+        "body": "{{name1}} {{delta1}} vs {{name2}} {{delta2}} — {{name2}} leads, {{name1}} lags."
+      }
     }
   }
 }
