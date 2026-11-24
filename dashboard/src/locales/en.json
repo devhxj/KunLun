@@ -8131,6 +8131,8 @@
       "submitButton": "Share dashboard",
       "submitFailed": "Couldn't share the dashboard",
       "loadFailed": "Couldn't load static dashboards",
+      "boardEmpty": "No HTML dashboards are shared to the Amoeba board yet. Upload one in My dashboards and pick who can see it, and it shows up here.",
+      "goUpload": "Upload in My dashboards",
       "create": "New dashboard",
       "file": "HTML file",
       "audience": "Sharing scope",
@@ -8232,7 +8234,16 @@
     "section": {
       "hint": "Click any card for trend & leaf ranking"
     },
+    "charts": {
+      "fuelMix": "Volume mix",
+      "marginMix": "Gross margin by line",
+      "daily": "Daily",
+      "ma7": "7-day average",
+      "budgetMeter": "Month budget",
+      "share": "Share"
+    },
     "insights": {
+      "action": "Suggested action",
       "levels": {
         "risk": "Risk",
         "warn": "Watch",

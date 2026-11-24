@@ -8131,6 +8131,8 @@
       "submitButton": "提交共享",
       "submitFailed": "提交静态看板失败",
       "loadFailed": "加载静态看板失败",
+      "boardEmpty": "还没有共享到阿米巴看板的 HTML 看板。在「我的看板」上传文件并选择分享范围后，会显示在这里。",
+      "goUpload": "去我的看板上传",
       "create": "新建看板",
       "file": "HTML 文件",
       "audience": "分享范围",
@@ -8232,7 +8234,16 @@
     "section": {
       "hint": "点击任意指标卡查看走势与分单元明细"
     },
+    "charts": {
+      "fuelMix": "销量结构",
+      "marginMix": "毛利构成",
+      "daily": "日值",
+      "ma7": "7 日均线",
+      "budgetMeter": "月预算",
+      "share": "占比"
+    },
     "insights": {
+      "action": "建议",
       "levels": {
         "risk": "风险",
         "warn": "关注",

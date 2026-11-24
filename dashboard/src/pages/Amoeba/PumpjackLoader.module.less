@@ -1,0 +1,153 @@
+.loader {
+  --pj-ink: var(--board-ink, #2f2a24);
+  --pj-accent: var(--board-brand, #c8102e);
+  --pj-fill: var(--board-card, #fff);
+  --pj-soft: var(--board-track, #f3eadf);
+  --pj-line: var(--board-line, #e8dcce);
+  display: grid;
+  flex: 1 0 auto;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  min-height: 0;
+  box-sizing: border-box;
+  padding: 12px;
+  text-align: center;
+  /* Fast responses finish before the loader becomes visible. */
+  animation: appear 320ms ease 160ms both;
+}
+
+.art {
+  display: block;
+  width: min(300px, 72vw, 72svh);
+  height: auto;
+  overflow: visible;
+}
+
+.caption {
+  color: var(--board-muted, #6e6355);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.ground {
+  stroke: var(--board-muted, #6e6355);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.groundDash {
+  stroke: var(--pj-line);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 2 7;
+}
+
+.steel,
+.housing,
+.carrier {
+  stroke: var(--pj-ink);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+
+.steel {
+  fill: var(--pj-soft);
+}
+
+.housing,
+.carrier {
+  fill: var(--pj-fill);
+}
+
+.post,
+.brace,
+.pipe,
+.pipeCore,
+.flow {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.post {
+  stroke: var(--pj-ink);
+  stroke-width: 3.5;
+}
+
+.brace {
+  stroke: var(--pj-ink);
+  stroke-width: 1.8;
+}
+
+.pipe {
+  stroke: var(--pj-ink);
+  stroke-width: 5.5;
+}
+
+.pipeCore {
+  stroke: var(--pj-fill);
+  stroke-width: 2.8;
+}
+
+.flow {
+  stroke: var(--pj-accent);
+  stroke-width: 2.8;
+  stroke-dasharray: 3 7;
+  animation: flow 0.9s linear infinite;
+}
+
+.cable {
+  stroke: var(--pj-ink);
+  stroke-width: 1.3;
+}
+
+.rod {
+  stroke: var(--pj-ink);
+  stroke-width: 2.2;
+}
+
+.weight,
+.head {
+  fill: var(--pj-accent);
+  stroke: var(--pj-ink);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+
+.arm,
+.beam {
+  fill: var(--pj-ink);
+}
+
+.pitman {
+  stroke: var(--pj-ink);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+
+.pin,
+.hub {
+  fill: var(--pj-fill);
+  stroke: var(--pj-ink);
+  stroke-width: 1.3;
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader,
+  .flow {
+    animation: none;
+  }
+}
