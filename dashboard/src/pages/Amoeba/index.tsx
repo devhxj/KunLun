@@ -13,8 +13,6 @@ import {
   Input,
   Progress,
   Segmented,
-  Select,
-  Spin,
   Table,
   Tag,
   Tree,
@@ -23,7 +21,6 @@ import type { DataNode } from "antd/es/tree";
 import {
   Area,
   AreaChart,
-  CartesianGrid,
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
   XAxis,
@@ -31,11 +28,18 @@ import {
 } from "recharts";
 import {
   ArrowUpRight,
+  Banknote,
   Coins,
+  Flame,
+  Fuel,
   GitBranch,
   MapPin,
+  PlugZap,
+  Refrigerator,
   RefreshCw,
   Settings2,
+  Tags,
+  type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import cx from "classnames";
@@ -45,14 +49,16 @@ import {
   type AmoebaDim,
   type AmoebaInsight,
   type AmoebaInsightLevel,
-  type AmoebaLeafRow,
   type AmoebaMetricCard,
   type AmoebaNarrative,
   type AmoebaOverview,
+  type AmoebaSharedBoard,
 } from "../../api/modules/amoeba";
 import { useUserRole } from "../../hooks/useUserRole";
 import MetricDrawer from "./MetricDrawer";
 import AdminModal from "./AdminModal";
+import DrillingLoader from "./DrillingLoader";
+import SharedBoards from "./SharedBoards";
 import {
   formatBudgetPct,
   formatDelta,
@@ -62,7 +68,14 @@ import styles from "./index.module.less";
 
 const DIM_OPTIONS = ["d", "m", "y"] as const;
 
-const WALL_METRICS = ["oil", "kwh", "rev", "profit", "dis"] as const;
+const METRIC_ICONS: Record<string, LucideIcon | undefined> = {
+  oil: Fuel,
+  ng: Flame,
+  kwh: PlugZap,
+  rev: Refrigerator,
+  profit: Banknote,
+  dis: Tags,
+};
 const COMPARISON_LABELS = {
   d: "amoeba.mom",
   m: "amoeba.budget",
@@ -87,12 +100,22 @@ const SECTION_COLORS: Record<string, string> = {
   ai: "purple",
   trend: "blue",
   wall: "mint",
+  static: "cyan",
 };
 
 function metricStyle(color: string | undefined): CSSProperties {
   return {
     "--metric-accent": color ? `var(--metric-${color})` : "var(--board-accent)",
   } as CSSProperties;
+}
+
+function MetricIcon({ metricKey }: { metricKey: string }) {
+  const Icon = METRIC_ICONS[metricKey];
+  return Icon ? (
+    <span className={styles.metricIcon} aria-hidden="true">
+      <Icon size={15} strokeWidth={1.8} />
+    </span>
+  ) : null;
 }
 
 /* ------------------------------------------------------------------ tree -- */
@@ -275,6 +298,7 @@ function KpiCard({
       onClick={onClick}
     >
       <div className={styles.kpiTop}>
+        <MetricIcon metricKey={card.metric_key} />
         <span className={styles.kpiLabel}>{nameOf(card)}</span>
         {note && (
           <span className={styles.kpiHint} title={note}>
@@ -484,84 +508,78 @@ function TrendPanel({
   locale: string;
 }) {
   const { t } = useTranslation();
-  const [metric, setMetric] = useState("oil");
   const nameOf = useLocaleName();
-  const card = cards.find((item) => item.metric_key === metric) ?? cards[0];
-  if (!card) return null;
+  if (!cards.length) return null;
+  const dates = cards.find((card) => card.spark.length)?.spark;
+  const first = dates?.[0]?.date;
+  const last = dates?.at(-1)?.date;
 
   return (
-    <section id="amoeba-section-trend" className={styles.trendPanel}>
-      <div className={styles.panelHeading}>
-        <div>
-          <h3 className={styles.sectionTitle}>{t("amoeba.workspace.trend")}</h3>
-          <span className={styles.trendUnit}>
-            {nameOf(card)} · {card.unit}
-          </span>
-        </div>
-        <Select
-          size="small"
-          aria-label={t("amoeba.workspace.trendMetric")}
-          value={card.metric_key}
-          onChange={setMetric}
-          options={cards.map((item) => ({
-            value: item.metric_key,
-            label: nameOf(item),
-          }))}
-        />
-      </div>
-      {card.spark.some((point) => point.value !== null) ? (
-        <div className={styles.trendPlot}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={card.spark}
-              margin={{ top: 12, right: 12, bottom: 0, left: 8 }}
+    <section id="amoeba-section-trend" className={styles.analysisPanel}>
+      <SectionTitle
+        category="trend"
+        hint={first && last ? `${first} — ${last}` : undefined}
+      />
+      <div className={styles.trendGrid}>
+        {cards.map((card) => {
+          const name = nameOf(card);
+          return (
+            <div
+              key={card.metric_key}
+              className={styles.trendTile}
+              style={metricStyle(METRIC_COLORS[card.color])}
             >
-              <CartesianGrid
-                vertical={false}
-                stroke="var(--board-line)"
-                strokeDasharray="3 4"
-              />
-              <XAxis
-                dataKey="date"
-                tickFormatter={(date: string) => date.slice(5)}
-                minTickGap={28}
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 11, fill: "var(--board-muted)" }}
-              />
-              <YAxis
-                width={64}
-                tickLine={false}
-                axisLine={false}
-                tick={{ fontSize: 11, fill: "var(--board-muted)" }}
-                tickFormatter={(value: number) =>
-                  formatMetricValue(value, card.format, "", locale)
-                }
-              />
-              <RechartsTooltip
-                formatter={(value) => [
-                  formatMetricValue(Number(value), card.format, "", locale),
-                  nameOf(card),
-                ]}
-              />
-              <Area
-                dataKey="value"
-                type="monotone"
-                stroke="var(--board-accent)"
-                fill="var(--board-accent)"
-                fillOpacity={0.13}
-                strokeWidth={2}
-                isAnimationActive={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      ) : (
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description={t("amoeba.workspace.trendEmpty")}
-        />
-      )}
+              <div className={styles.trendLabel}>
+                <MetricIcon metricKey={card.metric_key} />
+                <strong>{name}</strong>
+                <small>{card.unit}</small>
+              </div>
+              {card.spark.some((point) => point.value != null) ? (
+                <div className={styles.trendPlot} aria-label={name}>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={1}>
+                    <AreaChart
+                      data={card.spark}
+                      margin={{ top: 5, right: 4, bottom: 0, left: 4 }}
+                    >
+                      <XAxis dataKey="date" hide />
+                      <YAxis hide domain={["dataMin", "dataMax"]} />
+                      <RechartsTooltip
+                        formatter={(value) => [
+                          formatMetricValue(
+                            Number(value),
+                            card.format,
+                            "",
+                            locale,
+                          ),
+                          name,
+                        ]}
+                      />
+                      <Area
+                        dataKey="value"
+                        type="linear"
+                        stroke="var(--metric-accent)"
+                        fill="var(--metric-accent)"
+                        fillOpacity={0.14}
+                        strokeWidth={2}
+                        dot={{
+                          r: 2,
+                          fill: "var(--metric-accent)",
+                          strokeWidth: 0,
+                        }}
+                        isAnimationActive={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <p className={styles.trendMissing}>
+                  {t("amoeba.workspace.trendEmpty")}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }
@@ -596,85 +614,110 @@ function InsightList({ items }: { items: AmoebaInsight[] }) {
   );
 }
 
-/* --------------------------------------------------- peer comparison wall -- */
-
-function LeafWall({
-  rows,
-  metricOptions,
-  metric,
-  onMetric,
+function UnitComparison({
+  overview,
+  locale,
   onDrill,
 }: {
-  rows: AmoebaLeafRow[];
-  metricOptions: Array<{ key: string; label: string }>;
-  metric: string;
-  onMetric: (key: string) => void;
+  overview: AmoebaOverview;
+  locale: string;
   onDrill: (departmentId: string) => void;
 }) {
   const { t } = useTranslation();
-  const scale = Math.max(1, ...rows.map((row) => Math.abs(row.value)));
+  const nameOf = useLocaleName();
+  const rows = overview.comparison?.rows ?? [];
+  const metrics = (overview.comparison?.metric_keys ?? [])
+    .map((key) => overview.metrics[key])
+    .filter(Boolean);
+  const columns = metrics.map((card) => ({
+    card,
+    max: rows.reduce(
+      (max, row) => Math.max(max, Math.abs(row.values[card.metric_key] ?? 0)),
+      0,
+    ),
+  }));
+
   return (
-    <div className={styles.wall}>
-      <div className={styles.wallHead}>
-        <Select
-          size="small"
-          aria-label={t("amoeba.insights.wall.metric")}
-          value={metric}
-          onChange={onMetric}
-          style={{ minWidth: 150 }}
-          options={metricOptions.map(({ key, label }) => ({
-            value: key,
-            label,
-          }))}
-        />
-      </div>
-      {rows.length === 0 ? (
+    <section id="amoeba-section-wall" className={styles.analysisPanel}>
+      <SectionTitle category="wall" />
+      {rows.length && columns.length ? (
+        <table
+          className={styles.comparisonTable}
+          aria-label={t("amoeba.categories.wall")}
+        >
+          <thead>
+            <tr>
+              <th scope="col">{t("amoeba.workspace.organization")}</th>
+              {columns.map(({ card }) => (
+                <th
+                  key={card.metric_key}
+                  scope="col"
+                  style={metricStyle(METRIC_COLORS[card.color])}
+                >
+                  {nameOf(card)} <small>{card.unit}</small>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.department_id}>
+                <th scope="row">
+                  <button
+                    type="button"
+                    className={styles.comparisonUnit}
+                    onClick={() => onDrill(row.department_id)}
+                  >
+                    {row.name}
+                  </button>
+                </th>
+                {columns.map(({ card, max }) => {
+                  const value = row.values[card.metric_key];
+                  return (
+                    <td
+                      key={card.metric_key}
+                      style={metricStyle(METRIC_COLORS[card.color])}
+                    >
+                      <span
+                        className={styles.comparisonMobileLabel}
+                        aria-hidden="true"
+                      >
+                        {nameOf(card)} <small>{card.unit}</small>
+                      </span>
+                      <span
+                        className={cx(
+                          styles.comparisonValue,
+                          value != null && value < 0 && styles.down,
+                        )}
+                      >
+                        {formatMetricValue(value, card.format, "", locale)}
+                      </span>
+                      {value != null && max > 0 && (
+                        <span
+                          className={styles.comparisonTrack}
+                          aria-hidden="true"
+                        >
+                          <i
+                            style={{
+                              width: `${(Math.abs(value) / max) * 100}%`,
+                            }}
+                          />
+                        </span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description={t("amoeba.tree.empty")}
+          description={t("amoeba.workspace.comparisonEmpty")}
         />
-      ) : (
-        <div className={styles.wallGrid}>
-          {rows.map((row, idx) => (
-            <button
-              type="button"
-              key={row.department_id}
-              className={cx(styles.wallCard, idx < 3 && styles.wallCardTop)}
-              onClick={() => onDrill(row.department_id)}
-            >
-              <span className={styles.wallRank}>{idx + 1}</span>
-              <span className={styles.wallName}>{row.name}</span>
-              <span className={styles.wallValue}>
-                {row.value.toLocaleString(undefined, {
-                  maximumFractionDigits: 1,
-                })}
-              </span>
-              {row.delta_pct !== null && row.delta_pct !== undefined && (
-                <span
-                  className={cx(
-                    styles.wallDelta,
-                    row.delta_pct > 0 ? styles.up : styles.down,
-                  )}
-                >
-                  {formatDelta(row.delta_pct)}
-                </span>
-              )}
-              <span className={styles.wallTrack}>
-                <i
-                  className={styles.wallFill}
-                  style={{ width: `${(Math.abs(row.value) / scale) * 100}%` }}
-                />
-              </span>
-              {row.share !== null && row.share !== undefined && (
-                <span className={styles.wallShare}>
-                  {row.share.toFixed(1)}%
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -688,7 +731,9 @@ function SectionTitle({ category, hint }: { category: string; hint?: string }) {
       style={metricStyle(SECTION_COLORS[category])}
     >
       <h3 className={styles.sectionTitle}>
-        {t(`amoeba.categories.${category}`, { defaultValue: category })}
+        {category === "trend"
+          ? t("amoeba.workspace.trend")
+          : t(`amoeba.categories.${category}`, { defaultValue: category })}
       </h3>
       {hint && <span className={styles.sectionHint}>{hint}</span>}
     </div>
@@ -792,7 +837,6 @@ function SummarySection({ narrative }: { narrative: AmoebaNarrative }) {
 export default function AmoebaPage() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language ?? "en";
-  const zh = locale.toLowerCase().startsWith("zh");
   const role = useUserRole();
   const isAdmin = role === "admin";
   const nameOf = useLocaleName();
@@ -811,9 +855,9 @@ export default function AmoebaPage() {
     lead: "",
     items: [],
   });
-  const [leafRows, setLeafRows] = useState<AmoebaLeafRow[]>([]);
-  const [wallMetric, setWallMetric] = useState<string>("oil");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [staticBoards, setStaticBoards] = useState<AmoebaSharedBoard[]>([]);
+  const [staticBoardsFailed, setStaticBoardsFailed] = useState(false);
   const boardRequest = useRef(0);
   const [error, setError] = useState<string | null>(null);
   const [drawerKey, setDrawerKey] = useState<string | null>(null);
@@ -834,18 +878,25 @@ export default function AmoebaPage() {
     const requestId = ++boardRequest.current;
     setLoading(true);
     setError(null);
+    setNarrative({ lead: "", items: [] });
+    const summary = amoebaApi.summary({ dept, dim }).catch(() => null);
+    const status = amoebaApi.status().catch(() => null);
     try {
-      const [data, summary, status] = await Promise.all([
-        amoebaApi.overview({ dept, dim }),
-        amoebaApi
-          .summary({ dept, dim })
-          .catch(() => ({ lead: "", items: [] as AmoebaInsight[] })),
-        amoebaApi.status().catch(() => null),
-      ]);
+      const data = await amoebaApi.overview({
+        dept,
+        dim,
+        includeComparison: true,
+      });
       if (boardRequest.current === requestId) {
         setOverview(data);
-        setNarrative(summary);
-        if (status) setSourceName(status.source_name ?? "");
+        void summary.then((result) => {
+          if (result && boardRequest.current === requestId)
+            setNarrative(result);
+        });
+        void status.then((result) => {
+          if (result && boardRequest.current === requestId)
+            setSourceName(result.source_name ?? "");
+        });
       }
     } catch (exc) {
       if (boardRequest.current === requestId) {
@@ -864,22 +915,25 @@ export default function AmoebaPage() {
 
   useEffect(() => {
     void loadBoard();
+    return () => {
+      boardRequest.current += 1;
+    };
   }, [loadBoard]);
 
   useEffect(() => {
-    let cancelled = false;
-    amoebaApi
-      .leaves({ metric: wallMetric, dept, dim })
-      .then((data) => {
-        if (!cancelled) setLeafRows(data.rows);
-      })
-      .catch(() => {
-        if (!cancelled) setLeafRows([]);
-      });
+    let active = true;
+    void amoebaApi.sharedBoards().then(
+      (boards) => {
+        if (active) setStaticBoards(boards);
+      },
+      () => {
+        if (active) setStaticBoardsFailed(true);
+      },
+    );
     return () => {
-      cancelled = true;
+      active = false;
     };
-  }, [wallMetric, dept, dim]);
+  }, []);
 
   const { tree: treeData, rootKeys } = useMemo(
     () => buildTree(tree, treeFilter),
@@ -899,16 +953,14 @@ export default function AmoebaPage() {
     .map((key) => overview?.metrics[key])
     .filter((card): card is AmoebaMetricCard => Boolean(card));
   const groups = overview?.groups ?? [];
-  const operatingGroups = groups.filter(({ category }) =>
-    ["discount", "ops"].includes(category),
-  );
-  const mainGroups = groups.filter((group) => !operatingGroups.includes(group));
+  const firstLoad = loading && !overview;
+  const showStaticBoards = !firstLoad && staticBoards.length > 0;
   const navigation = [
-    ...mainGroups.map(({ category }) => category),
-    ...operatingGroups.map(({ category }) => category),
-    ...(narrative.items.length ? ["ai"] : []),
-    "trend",
+    ...groups.map(({ category }) => category),
+    ...(coreCards.length ? ["trend"] : []),
     "wall",
+    ...(narrative.items.length ? ["ai"] : []),
+    ...(showStaticBoards ? ["static"] : []),
   ];
   const hasData = Boolean(overview?.asof);
 
@@ -916,16 +968,6 @@ export default function AmoebaPage() {
     setDept(departmentId);
     setShowTree(false);
   }
-
-  const wallMetricOptions = useMemo(() => {
-    if (!overview) return [];
-    return WALL_METRICS.map((key) => overview.metrics[key])
-      .filter((card): card is AmoebaMetricCard => Boolean(card))
-      .map((card) => ({
-        key: card.metric_key,
-        label: zh ? card.name_zh : card.name_en,
-      }));
-  }, [overview, zh]);
 
   const renderGroup = (category: string, keys: string[]) => {
     if (!overview) return null;
@@ -1099,7 +1141,9 @@ export default function AmoebaPage() {
       );
     } else {
       body = (
-        <div className={styles.triGrid}>
+        <div
+          className={cx(styles.triGrid, category === "ops" && styles.opsGrid)}
+        >
           {cards.map((card) => (
             <TriCard
               key={card.metric_key}
@@ -1179,7 +1223,7 @@ export default function AmoebaPage() {
               aria-label={t("common.refresh")}
               title={t("common.refresh")}
               icon={<RefreshCw size={14} />}
-              loading={loading}
+              disabled={loading}
               onClick={() => {
                 void loadBoard();
                 void loadTree();
@@ -1264,12 +1308,10 @@ export default function AmoebaPage() {
             )}
           </aside>
 
-          <div className={styles.content}>
-            {loading && !overview ? (
-              <div className={styles.center}>
-                <Spin />
-              </div>
-            ) : !overview || !overview.asof ? (
+          <div className={styles.content} aria-busy={loading}>
+            {firstLoad ? (
+              <DrillingLoader />
+            ) : !overview?.asof ? (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description={t("amoeba.empty")}
@@ -1278,32 +1320,30 @@ export default function AmoebaPage() {
             ) : (
               <>
                 <QuickRead overview={overview} locale={locale} />
-                {mainGroups.map((g) => renderGroup(g.category, g.metric_keys))}
-                {operatingGroups.length > 0 && (
-                  <div className={styles.operatingGrid}>
-                    {operatingGroups.map((g) =>
-                      renderGroup(g.category, g.metric_keys),
-                    )}
-                  </div>
-                )}
+                {groups.map((g) => renderGroup(g.category, g.metric_keys))}
+                <TrendPanel cards={coreCards} locale={locale} />
+                <UnitComparison
+                  overview={overview}
+                  locale={locale}
+                  onDrill={selectDepartment}
+                />
                 <SummarySection narrative={narrative} />
-                <div className={styles.analysisGrid}>
-                  <TrendPanel cards={coreCards} locale={locale} />
-                  <section
-                    id="amoeba-section-wall"
-                    className={cx(styles.section, styles.rankingPanel)}
-                  >
-                    <SectionTitle category="wall" />
-                    <LeafWall
-                      rows={leafRows}
-                      metricOptions={wallMetricOptions}
-                      metric={wallMetric}
-                      onMetric={setWallMetric}
-                      onDrill={selectDepartment}
-                    />
-                  </section>
-                </div>
               </>
+            )}
+            {showStaticBoards && (
+              <section
+                id="amoeba-section-static"
+                className={styles.analysisPanel}
+              >
+                <SectionTitle category="static" />
+                <SharedBoards boards={staticBoards} />
+              </section>
+            )}
+            {!firstLoad && staticBoardsFailed && (
+              <Alert
+                type="error"
+                message={t("amoeba.sharedBoards.loadFailed")}
+              />
             )}
           </div>
           {hasData && (

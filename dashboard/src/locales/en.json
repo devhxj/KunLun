@@ -324,6 +324,7 @@
     "embedding": "Embedding",
     "tokenUsage": "Token Usage",
     "amoeba": "Amoeba board",
+    "myStaticBoards": "My dashboards",
     "checkUpdates": "App Updates",
     "newVersionBadge": "New version",
     "newVersionBadgeShort": "NEW",
@@ -8114,6 +8115,8 @@
       "trend": "Recent performance",
       "trendMetric": "Trend metric",
       "trendEmpty": "No trend data available",
+      "loading": "Loading performance data…",
+      "comparisonEmpty": "No reporting units have data for this period",
       "dailyBrief": "Performance brief",
       "nonFuel": "Non-fuel operations",
       "tabs": {
@@ -8122,6 +8125,26 @@
         "profit": "Profit & pay",
         "operations": "Operations & discounts"
       }
+    },
+    "sharedBoards": {
+      "submit": "Submit to Amoeba board",
+      "submitButton": "Share dashboard",
+      "submitFailed": "Couldn't share the dashboard",
+      "loadFailed": "Couldn't load static dashboards",
+      "create": "New dashboard",
+      "file": "HTML file",
+      "audience": "Sharing scope",
+      "allViewers": "All board users",
+      "groupsFailed": "Couldn't load user groups",
+      "savedToMine": "Saved to My dashboards",
+      "mineEmptyTitle": "No dashboards yet",
+      "mineEmpty": "Upload an HTML file or submit a dashboard from an expert chat.",
+      "replace": "Replace file",
+      "replaceHint": "The new file will replace the contents of “{{filename}}” and keep its name and sharing scope.",
+      "replaced": "Dashboard contents updated",
+      "replaceFailed": "Couldn't replace the dashboard file",
+      "deleteTitle": "Delete this static dashboard?",
+      "deleteFailed": "Couldn't delete the dashboard"
     },
     "dim": {
       "d": "Day",
@@ -8165,7 +8188,8 @@
       "discount": "Discounts & operations detail",
       "ops": "Operations",
       "ai": "AI summary",
-      "wall": "Unit peer comparison"
+      "wall": "Unit peer comparison",
+      "static": "Other business dashboards"
     },
     "admin": {
       "title": "Amoeba admin",

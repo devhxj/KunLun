@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
+from uuid import uuid4
 
 from tests.support.auth import TEST_PASSWORD, bearer, login
 
@@ -11,6 +13,143 @@ TREE = "/api/amoeba/tree"
 SOURCE = "/api/amoeba/source"
 METRICS = "/api/amoeba/metrics"
 BINDINGS = "/api/amoeba/bindings"
+SHARED_BOARDS = "/api/amoeba/shared-boards"
+
+
+async def test_share_html_snapshot_and_withdraw(env) -> None:
+    client, _, auth = env
+    assert (await client.get(SHARED_BOARDS)).status_code == 401
+    assert (await client.get(SHARED_BOARDS, headers=auth)).json() == []
+
+    invalid = await client.post(
+        SHARED_BOARDS, headers=auth, files={"file": ("board.html", b"not HTML", "text/html")}
+    )
+    assert invalid.status_code == 400
+    html = b"<!DOCTYPE html><html><body><h1>November</h1></body></html>"
+    uploaded = await client.post(
+        SHARED_BOARDS, headers=auth, files={"file": ("November.html", html, "text/html")}
+    )
+    assert uploaded.status_code == 201, uploaded.text
+    board = uploaded.json()
+    assert board["filename"] == "November.html"
+    assert board["can_withdraw"] is True
+    snapshot = f"{SHARED_BOARDS}/{board['id']}"
+
+    user = await client.post(
+        "/api/users",
+        headers=auth,
+        json={"username": "boardreader", "password": TEST_PASSWORD, "role": "user"},
+    )
+    assert user.status_code == 201, user.text
+    reader_auth = bearer(await login(client, username="boardreader", password=TEST_PASSWORD))
+    listing = await client.get(SHARED_BOARDS, headers=reader_auth)
+    assert listing.json() == [{**board, "can_withdraw": False}]
+    read = await client.get(snapshot, headers=reader_auth)
+    assert read.content == html
+    assert read.headers["content-type"] == "application/octet-stream"
+    assert read.headers["content-disposition"].startswith("attachment")
+    assert (await client.delete(snapshot, headers=reader_auth)).status_code == 403
+
+    updated = await client.patch(
+        f"/api/users/{user.json()['id']}", headers=auth, json={"permissions": []}
+    )
+    assert updated.status_code == 200, updated.text
+    assert (await client.get(snapshot, headers=reader_auth)).status_code == 403
+    assert (await client.delete(snapshot, headers=auth)).status_code == 204
+    assert (await client.get(snapshot, headers=auth)).status_code == 404
+    assert (await client.get(SHARED_BOARDS, headers=auth)).json() == []
+
+
+async def test_personal_dashboard_visibility_and_replacement(env) -> None:
+    client, server, admin = env
+    accounts = {}
+    for name in ("boardowner", "ingroup", "outsider"):
+        created = await client.post(
+            "/api/users",
+            headers=admin,
+            json={"username": name, "password": TEST_PASSWORD, "role": "user"},
+        )
+        assert created.status_code == 201
+        accounts[name] = created.json()["id"]
+    owner = bearer(await login(client, username="boardowner", password=TEST_PASSWORD))
+    member = bearer(await login(client, username="ingroup", password=TEST_PASSWORD))
+    outsider = bearer(await login(client, username="outsider", password=TEST_PASSWORD))
+    repos = server.services.repos
+    group = repos.user_group_repo.create(name="Retail", description=None)
+    group_id = group.user_group_id
+    repos.user_group_member_repo.replace(group_id, [accounts["ingroup"]])
+    groups = await client.get(f"{SHARED_BOARDS}/groups", headers=owner)
+    assert groups.json() == [{"id": group_id, "name": "Retail"}]
+
+    original = b"<!DOCTYPE html><html><body>First</body></html>"
+    new_html = b"<!DOCTYPE html><html><body>Second</body></html>"
+    uploaded = await client.post(
+        SHARED_BOARDS,
+        headers=owner,
+        data={"visibility": "owner"},
+        files={"file": ("Report.html", original, "text/html")},
+    )
+    assert uploaded.status_code == 201, uploaded.text
+    board = uploaded.json()
+    path = f"{SHARED_BOARDS}/{board['id']}"
+    assert (await client.get(SHARED_BOARDS, headers=owner)).json() == [board]
+    assert (await client.get(SHARED_BOARDS, headers=owner, params={"mine": 1})).json() == [board]
+    assert (await client.get(SHARED_BOARDS, headers=admin)).json() == []
+    assert (await client.get(path, headers=outsider)).status_code == 404
+
+    audience = {"visibility": "groups", "group_ids": [group_id]}
+    assert (await client.patch(path, headers=outsider, json=audience)).status_code == 403
+    changed = await client.patch(path, headers=owner, json=audience)
+    assert changed.status_code == 200 and changed.json()["group_ids"] == [group_id]
+    assert (await client.get(SHARED_BOARDS, headers=member)).json()[0]["id"] == board["id"]
+    assert (await client.get(SHARED_BOARDS, headers=member, params={"mine": 1})).json() == []
+    assert (await client.get(SHARED_BOARDS, headers=outsider)).json() == []
+    assert (await client.get(path, headers=member)).content == original
+
+    files = {"file": ("replacement.html", new_html, "text/html")}
+    assert (await client.put(f"{path}/file", headers=member, files=files)).status_code == 403
+    replaced = await client.put(f"{path}/file", headers=owner, files=files)
+    assert replaced.status_code == 200 and replaced.json() == changed.json()
+    assert (await client.get(path, headers=member)).content == new_html
+
+    invalid = await client.put(
+        f"{path}/file", headers=owner, files={"file": ("invalid.html", b"oops", "text/html")}
+    )
+    assert invalid.status_code == 400
+    assert (await client.get(path, headers=member)).content == new_html
+    repos.user_group_member_repo.replace(group_id, [])
+    assert (await client.get(path, headers=member)).status_code == 404
+    assert (await client.get(SHARED_BOARDS, headers=member)).json() == []
+    assert (await client.patch(path, headers=owner, json={"visibility": "all"})).status_code == 200
+    assert (await client.get(path, headers=outsider)).content == new_html
+    assert (
+        await client.patch(path, headers=owner, json={"visibility": "owner"})
+    ).status_code == 200
+    assert (await client.get(path, headers=outsider)).status_code == 404
+    assert (await client.get(path, headers=owner)).content == new_html
+
+    group_upload = await client.post(
+        SHARED_BOARDS,
+        headers=owner,
+        data={"visibility": "groups", "group_ids": group_id},
+        files={"file": ("Group.html", original, "text/html")},
+    )
+    assert group_upload.status_code == 201 and group_upload.json()["group_ids"] == [group_id]
+
+    legacy_id = uuid4().hex
+    legacy = server.services.paths.root / "amoeba-shared-boards" / legacy_id
+    legacy.mkdir()
+    metadata = {
+        "id": legacy_id,
+        "filename": "Legacy.html",
+        "owner_id": accounts["boardowner"],
+        "created_at": 1,
+    }
+    (legacy / "board.json").write_text(json.dumps(metadata), encoding="utf-8")
+    (legacy / "board.html").write_bytes(original)
+    legacy_visible = await client.get(SHARED_BOARDS, headers=outsider)
+    assert [b["id"] for b in legacy_visible.json()] == [legacy_id]
+    assert (await client.get(f"{SHARED_BOARDS}/{legacy_id}", headers=outsider)).content == original
 
 
 async def _seed_tree(server: Any) -> dict[str, str]:
@@ -127,6 +266,13 @@ async def test_amoeba_data_scope_from_department_binding(env) -> None:
     scoped = await client.get(OVERVIEW, headers=member_auth)
     assert scoped.json()["metrics"]["gas"]["dims"]["d"] == 125.0  # st3 excluded
 
+    comparison = await client.get(OVERVIEW, headers=member_auth, params={"include_comparison": 1})
+    assert comparison.status_code == 200, comparison.text
+    assert {r["department_id"] for r in comparison.json()["comparison"]["rows"]} == {
+        ids["st1"],
+        ids["st2"],
+    }
+
     # Drilling outside the bound subtree is forbidden.
     forbidden = await client.get(OVERVIEW, headers=member_auth, params={"dept": ids["other"]})
     assert forbidden.status_code == 403
@@ -136,6 +282,30 @@ async def test_amoeba_data_scope_from_department_binding(env) -> None:
         BINDINGS, headers=auth, json={"user_id": member_id, "department_ids": ["missing"]}
     )
     assert bad.status_code == 404
+
+
+async def test_amoeba_unit_comparison_includes_direct_and_subtree_facts(env) -> None:
+    client, server, auth = env
+    ids = await _seed_tree(server)
+    repos = server.services.repos
+    assert repos.department_repo.create("公司机关", ids["root"]) is not None
+    repos.amoeba_repo.upsert_snapshots(
+        [
+            (ids["am"], "2026-11-11", "gas", 10.0),
+            (ids["other"], "2026-11-11", "kwh", 0.0),
+        ]
+    )
+
+    response = await client.get(OVERVIEW, headers=auth, params={"include_comparison": 1})
+    assert response.status_code == 200, response.text
+    comparison = response.json()["comparison"]
+    assert comparison["metric_keys"] == ["oil", "ng", "kwh", "rev", "profit", "dis"]
+    rows = {row["department_id"]: row["values"] for row in comparison["rows"]}
+    assert set(rows) == {ids["am"], ids["other"]}
+    assert rows[ids["am"]]["oil"] == 210.0
+    assert rows[ids["am"]]["kwh"] is None
+    assert rows[ids["other"]]["oil"] == 777.0
+    assert rows[ids["other"]]["kwh"] == 0.0
 
 
 async def test_amoeba_source_config_and_metric_admin(env_admin_client) -> None:

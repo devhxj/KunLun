@@ -75,6 +75,7 @@ describe("pathPermissionKeys", () => {
     expect(pathPermissionKeys("/experts")).toEqual([...PERM.experts]);
     expect(pathPermissionKeys("/tasks")).toEqual([...PERM.tasks]);
     expect(pathPermissionKeys("/token-usage")).toEqual([...PERM.tokenUsage]);
+    expect(pathPermissionKeys("/my-static-boards")).toEqual([...PERM.amoeba]);
     const user = { role: "user", permissions: ["experts"] };
     expect(canAccessPath(user, "/experts")).toBe(true);
     expect(canAccessPath(user, "/tasks")).toBe(false);

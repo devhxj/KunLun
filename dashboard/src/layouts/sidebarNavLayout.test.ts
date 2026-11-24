@@ -40,6 +40,7 @@ describe("sidebarNavLayout", () => {
       "tasks",
       "token-usage",
       "amoeba",
+      "my-static-boards",
     ]);
     expect(editor.groups.map((group) => group.id)).toEqual([
       "settings",
@@ -69,7 +70,10 @@ describe("sidebarNavLayout", () => {
       "settings",
       "control",
     ]);
-    expect(applied[0]?.items.map((item) => item.key)).toEqual(["chat"]);
+    expect(applied[0]?.items.map((item) => item.key)).toEqual([
+      "chat",
+      "my-static-boards",
+    ]);
     expect(applied[1]?.title).toBe("配置");
     expect(applied[1]?.items.map((item) => item.key)).toEqual([
       "personalization",
@@ -82,7 +86,7 @@ describe("sidebarNavLayout", () => {
       groups: [{ id: "settings" }],
       items: [{ key: "chat" }],
     });
-    expect(editor.ungrouped).toEqual(["chat"]);
+    expect(editor.ungrouped).toEqual(["chat", "my-static-boards"]);
     expect(editor.hidden).toContain("experts");
     expect(editor.hidden).toContain("personalization");
     expect(
@@ -93,6 +97,15 @@ describe("sidebarNavLayout", () => {
         .flatMap((section) => section.items.map((item) => item.key))
         .includes("experts"),
     ).toBe(false);
+  });
+
+  it("keeps an explicit choice to hide My static dashboards", () => {
+    const editor = editorFromCatalog(catalog(), {
+      groups: [],
+      items: [{ key: "amoeba" }, { key: "my-static-boards", hidden: true }],
+    });
+    expect(editor.ungrouped).toEqual(["amoeba"]);
+    expect(editor.hidden).toContain("my-static-boards");
   });
 
   it("moves a deleted group's items to the front of the ungrouped list", () => {

@@ -324,6 +324,7 @@
     "embedding": "Embedding",
     "tokenUsage": "Token 统计",
     "amoeba": "阿米巴看板",
+    "myStaticBoards": "我的看板",
     "checkUpdates": "应用更新",
     "newVersionBadge": "有新版本",
     "newVersionBadgeShort": "新",
@@ -8114,6 +8115,8 @@
       "trend": "近期经营走势",
       "trendMetric": "趋势指标",
       "trendEmpty": "暂无趋势数据",
+      "loading": "正在加载经营数据…",
+      "comparisonEmpty": "当前周期暂无可对比的机构数据",
       "dailyBrief": "经营速览",
       "nonFuel": "非油经营",
       "tabs": {
@@ -8122,6 +8125,26 @@
         "profit": "效益与薪酬",
         "operations": "运营与折扣"
       }
+    },
+    "sharedBoards": {
+      "submit": "提交到阿米巴三级看板",
+      "submitButton": "提交共享",
+      "submitFailed": "提交静态看板失败",
+      "loadFailed": "加载静态看板失败",
+      "create": "新建看板",
+      "file": "HTML 文件",
+      "audience": "分享范围",
+      "allViewers": "所有看板用户",
+      "groupsFailed": "加载用户分组失败",
+      "savedToMine": "已保存到我的看板",
+      "mineEmptyTitle": "还没有看板",
+      "mineEmpty": "上传 HTML 文件，或从专家对话提交生成的看板。",
+      "replace": "重新上传",
+      "replaceHint": "新文件将覆盖「{{filename}}」的内容。看板名称和分享范围保持不变。",
+      "replaced": "看板内容已更新",
+      "replaceFailed": "替换看板文件失败",
+      "deleteTitle": "删除这个静态看板？",
+      "deleteFailed": "删除看板失败"
     },
     "dim": {
       "d": "日",
@@ -8165,7 +8188,8 @@
       "discount": "折扣与运营明细",
       "ops": "运营类",
       "ai": "智能小结",
-      "wall": "分单元横向对比"
+      "wall": "分单元横向对比",
+      "static": "其他业务静态看板"
     },
     "admin": {
       "title": "看板管理",

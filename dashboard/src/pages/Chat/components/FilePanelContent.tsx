@@ -17,11 +17,15 @@ import {
   FileX,
   Eye,
   Code2,
+  Share2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import cx from "classnames";
 import { probeAuthResource, request, requestBlob } from "../../../api/request";
+import SharedBoardEditor from "../../../components/StaticBoard/SharedBoardEditor";
+import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { isNotFoundApiError } from "../../../utils/apiError";
+import { userCan } from "../../../utils/permissions";
 import { saveBlobAsFile } from "../../../utils/saveBlobAsFile";
 import FileViewer from "../../Agent/Workspace/components/FileViewer";
 import { getDocKind } from "../../Agent/Workspace/utils/docKind";
@@ -59,6 +63,7 @@ export default function FilePanelContent({
   onActionsChange,
 }: FilePanelContentProps) {
   const { t } = useTranslation();
+  const user = useCurrentUser();
   const resolvedPath = normalizeDockFilePath(filePath);
   const [content, setContent] = useState<string>("");
   const [editMode, setEditMode] = useState(false);
@@ -66,6 +71,7 @@ export default function FilePanelContent({
   const [fileLoading, setFileLoading] = useState(false);
   const [fileMissing, setFileMissing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [submittingBoard, setSubmittingBoard] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
 
   const docKind = resolvedPath ? getDocKind(resolvedPath) : null;
@@ -73,6 +79,12 @@ export default function FilePanelContent({
   const previewKind = resolvedPath ? getPreviewKind(resolvedPath) : null;
   const isText = resolvedPath ? isProbablyText(resolvedPath) : false;
   const showEditButton = isText && !fileMissing;
+  const showShareBoard =
+    /\.html?$/i.test(resolvedPath) &&
+    userCan(user, "amoeba") &&
+    !fileMissing &&
+    !fileLoading &&
+    !editMode;
   const showPreviewToggle =
     isText &&
     previewKind !== null &&
@@ -91,6 +103,7 @@ export default function FilePanelContent({
     setPreviewMode(defaultPreviewMode(resolvedPath));
     setContent("");
     setFileMissing(false);
+    setSubmittingBoard(false);
 
     let cancelled = false;
     setFileLoading(true);
@@ -269,6 +282,18 @@ export default function FilePanelContent({
             <ArrowDownToLine size={16} strokeWidth={2} />
           </button>
         </Tooltip>
+        {showShareBoard && (
+          <Tooltip title={t("amoeba.sharedBoards.submit")}>
+            <button
+              type="button"
+              className={styles.fileModalIconBtn}
+              onClick={() => setSubmittingBoard(true)}
+              aria-label={t("amoeba.sharedBoards.submit")}
+            >
+              <Share2 size={16} strokeWidth={2} />
+            </button>
+          </Tooltip>
+        )}
         {showEditButton &&
           (editMode ? (
             <Tooltip title={t("common.save")}>
@@ -315,6 +340,7 @@ export default function FilePanelContent({
     fileLoading,
     fileMissing,
     showEditButton,
+    showShareBoard,
     editMode,
     saving,
     t,
@@ -336,6 +362,24 @@ export default function FilePanelContent({
 
   return (
     <div className={styles.filePanelBody}>
+      {submittingBoard && (
+        <SharedBoardEditor
+          source={{
+            filename: dockFileBasename(resolvedPath),
+            read: () =>
+              requestBlob(
+                `/agents/${agentId}/workspace/download?path=${encodeURIComponent(
+                  apiFilePath,
+                )}`,
+              ),
+          }}
+          onClose={() => setSubmittingBoard(false)}
+          onSaved={() => {
+            setSubmittingBoard(false);
+            message.success(t("amoeba.sharedBoards.savedToMine"));
+          }}
+        />
+      )}
       <div
         className={cx(
           styles.fileModalBody,

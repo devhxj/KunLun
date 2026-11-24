@@ -12,8 +12,10 @@ from octop.infra.db.repos.amoeba import AmoebaMetricRow
 
 # Board group layout: ordered metric keys per category (a key may appear in more
 # than one group, e.g. profit is both a core KPI and the last benefit card).
+CORE_METRIC_KEYS = ("oil", "ng", "kwh", "rev", "profit", "dis")
+
 BUILTIN_GROUP_LAYOUT: list[tuple[str, list[str]]] = [
-    ("core", ["oil", "ng", "kwh", "rev", "profit", "dis"]),
+    ("core", list(CORE_METRIC_KEYS)),
     ("category", ["gas", "die", "lng", "cng", "chgpergun", "chgfee"]),
     ("profit", ["gasgp", "nonoilgp", "tonnonoilgp", "nggp", "chggp", "profit"]),
     ("pay", ["pay", "oilPay", "nonPay"]),

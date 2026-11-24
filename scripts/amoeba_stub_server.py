@@ -88,13 +88,10 @@ def _branch_rows(path: Path) -> list[dict[str, Any]]:
     if len(units) != len(names) or {row[1] for row in units} != names:
         raise ValueError("Hubei sales root and branch names must each match one department")
     root_id, _, root_parent = next(row for row in units if row[1] == "湖北销售")
-    parents = {row[2] for row in departments}
     if root_parent is not None or any(
-        parent != root_id or department_id in parents
-        for department_id, _, parent in units
-        if department_id != root_id
+        parent != root_id for department_id, _, parent in units if department_id != root_id
     ):
-        raise ValueError("Hubei sales branches must be the root's direct leaf departments")
+        raise ValueError("Hubei sales branches must be direct children of the root")
     return [
         {
             "unit_key": f"hubei-branch:{department_id}",

@@ -20,6 +20,7 @@ import {
   Shield,
   PanelsTopLeft,
   BarChart3,
+  FileChartColumn,
 } from "lucide-react";
 import type { OctopUser } from "../api/modules/auth";
 import { navAllowed, userCan } from "../utils/permissions";
@@ -71,6 +72,7 @@ export const SIDEBAR_NAV_KEYS = [
   "tasks",
   "token-usage",
   "amoeba",
+  "my-static-boards",
   "personalization",
   "channels",
   "connectors",
@@ -191,6 +193,12 @@ export function buildNavSections(
       path: "/amoeba",
       icon: <BarChart3 size={iconSize} strokeWidth={iconStroke} />,
       labelKey: "nav.amoeba",
+    });
+    topItems.push({
+      key: "my-static-boards",
+      path: "/my-static-boards",
+      icon: <FileChartColumn size={iconSize} strokeWidth={iconStroke} />,
+      labelKey: "nav.myStaticBoards",
     });
   }
   const sections: NavSection[] = [{ items: topItems }];

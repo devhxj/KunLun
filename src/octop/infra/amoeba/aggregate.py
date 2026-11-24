@@ -16,7 +16,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import cast
 
-from octop.infra.amoeba.builtin_metrics import BUILTIN_GROUP_LAYOUT
+from octop.infra.amoeba.builtin_metrics import BUILTIN_GROUP_LAYOUT, CORE_METRIC_KEYS
 from octop.infra.amoeba.formula import evaluate_formula, formula_dependencies
 from octop.infra.db.repos.amoeba import AmoebaMetricRow, AmoebaRepo
 from octop.infra.db.repos.departments import DepartmentRow
@@ -75,12 +75,23 @@ def rolled_values(
     """Absolute-value roll-up for one window: raw SUMs plus derived evaluation."""
     raw_keys = [m.metric_key for m in metrics if not m.formula]
     values: dict[str, float | None] = dict.fromkeys(raw_keys, 0.0)
+    values.update(_raw_window_values(repo, department_ids, metrics, date_from, date_to))
+    return _resolve_derived(values, metrics, days)
+
+
+def _raw_window_values(
+    repo: AmoebaRepo,
+    department_ids: list[str],
+    metrics: list[AmoebaMetricRow],
+    date_from: str,
+    date_to: str,
+) -> dict[str, float]:
     sum_keys = [m.metric_key for m in metrics if not m.formula and m.agg != "last"]
     last_keys = [m.metric_key for m in metrics if not m.formula and m.agg == "last"]
-    values.update(repo.sum_snapshots(department_ids, sum_keys, date_from, date_to))
+    values = repo.sum_snapshots(department_ids, sum_keys, date_from, date_to)
     if last_keys:
         values.update(repo.last_snapshots(department_ids, last_keys, date_from, date_to))
-    return _resolve_derived(values, metrics, days)
+    return values
 
 
 def _resolve_derived(
@@ -267,6 +278,79 @@ def build_overview(
         "groups": groups,
         "metrics": cards,
     }
+
+
+def build_unit_comparison(
+    repo: AmoebaRepo,
+    *,
+    department_ids: list[str],
+    departments: list[DepartmentRow],
+    department_id: str | None,
+    metrics: list[AmoebaMetricRow],
+    asof: date,
+    dim: str,
+) -> dict[str, object]:
+    """Compare reporting branches while preserving both missing values and recorded zeroes."""
+    definition = {m.metric_key: m for m in metrics}
+    keys = [
+        key
+        for key in CORE_METRIC_KEYS
+        if key in definition and definition[key].enabled and definition[key].category != "hidden"
+    ]
+    closures = {key: _closure_for(definition[key], metrics) for key in keys}
+    raw_by_metric = {
+        key: {m.metric_key for m in closure if not m.formula} for key, closure in closures.items()
+    }
+    needed = {m.metric_key for closure in closures.values() for m in closure}
+    wanted = [m for m in metrics if m.metric_key in needed]
+    scope = set(department_ids)
+    children: dict[str | None, list[str]] = {}
+    names = {}
+    for dept in departments:
+        if dept.department_id in scope:
+            parent = dept.parent_id if dept.parent_id in scope else None
+            children.setdefault(parent, []).append(dept.department_id)
+            names[dept.department_id] = dept.name
+
+    # The whole province usually has one organization root above its reporting units.
+    roots = children.get(None, [])
+    if department_id is None and len(roots) == 1:
+        department_id = roots[0]
+    units = children.get(department_id, [])
+    date_from, date_to, days = _window(asof, dim)
+
+    def row(unit: str, member_ids: list[str]) -> dict[str, object] | None:
+        raw = _raw_window_values(repo, member_ids, wanted, date_from, date_to)
+        if not raw:
+            return None
+        values: dict[str, float | None] = dict.fromkeys(
+            (m.metric_key for m in wanted if not m.formula), 0.0
+        )
+        values.update(raw)
+        resolved = _resolve_derived(values, wanted, days)
+        return {
+            "department_id": unit,
+            "name": names[unit],
+            "values": {
+                key: resolved.get(key) if not raw_by_metric[key].isdisjoint(raw) else None
+                for key in keys
+            },
+        }
+
+    rows = []
+    for unit in units:
+        members = [unit]
+        for member in members:
+            members.extend(children.get(member, []))
+        result = row(unit, members)
+        if result is not None:
+            rows.append(result)
+    # Some sources report directly at division level before station data is available.
+    if not rows and department_id is not None:
+        result = row(department_id, [department_id])
+        if result is not None:
+            rows.append(result)
+    return {"metric_keys": keys, "rows": rows}
 
 
 def build_metric_detail(

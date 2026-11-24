@@ -1,4 +1,5 @@
-import { request } from "../request";
+import { request, requestBlob, requestUpload } from "../request";
+import type { ResourceVisibilityMode } from "./userGroups";
 
 export type AmoebaDim = "d" | "m" | "y";
 
@@ -41,6 +42,14 @@ export interface AmoebaOverview {
   period_days: number;
   groups: Array<{ category: string; metric_keys: string[] }>;
   metrics: Record<string, AmoebaMetricCard>;
+  comparison?: {
+    metric_keys: string[];
+    rows: Array<{
+      department_id: string;
+      name: string;
+      values: Partial<Record<string, number | null>>;
+    }>;
+  };
 }
 
 export interface AmoebaMetricDetail {
@@ -108,6 +117,20 @@ export interface AmoebaMetricAdmin {
 
 const path = "/amoeba";
 
+export interface AmoebaSharedBoard {
+  id: string;
+  filename: string;
+  created_at: number;
+  can_withdraw: boolean;
+  visibility: ResourceVisibilityMode;
+  group_ids: string[];
+}
+
+export type AmoebaBoardAudience = Pick<
+  AmoebaSharedBoard,
+  "visibility" | "group_ids"
+>;
+
 function qs(
   params: Record<string, string | number | undefined | null>,
 ): string {
@@ -122,10 +145,56 @@ function qs(
 }
 
 export const amoebaApi = {
+  sharedBoards: (mine = false) =>
+    request<AmoebaSharedBoard[]>(
+      `${path}/shared-boards${mine ? "?mine=1" : ""}`,
+    ),
+  boardGroups: () =>
+    request<Array<{ id: string; name: string }>>(
+      `${path}/shared-boards/groups`,
+    ),
+  readSharedBoard: (id: string, signal?: AbortSignal) =>
+    requestBlob(`${path}/shared-boards/${encodeURIComponent(id)}`, { signal }),
+  shareBoard: (file: Blob, filename: string, audience: AmoebaBoardAudience) => {
+    const form = new FormData();
+    form.append("file", file, filename);
+    form.append("visibility", audience.visibility);
+    audience.group_ids.forEach((id) => form.append("group_ids", id));
+    return requestUpload<AmoebaSharedBoard>(`${path}/shared-boards`, form);
+  },
+  replaceBoard: (id: string, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return requestUpload<AmoebaSharedBoard>(
+      `${path}/shared-boards/${encodeURIComponent(id)}/file`,
+      form,
+      { method: "PUT" },
+    );
+  },
+  updateBoardAudience: (id: string, audience: AmoebaBoardAudience) =>
+    request<AmoebaSharedBoard>(
+      `${path}/shared-boards/${encodeURIComponent(id)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(audience),
+      },
+    ),
+  deleteBoard: (id: string) =>
+    request<void>(`${path}/shared-boards/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    }),
   tree: () => request<AmoebaTree>(`${path}/tree`),
-  overview: (opts: { dept?: string | null; dim: AmoebaDim }) =>
+  overview: (opts: {
+    dept?: string | null;
+    dim: AmoebaDim;
+    includeComparison?: boolean;
+  }) =>
     request<AmoebaOverview>(
-      `${path}/overview${qs({ dept: opts.dept, dim: opts.dim })}`,
+      `${path}/overview${qs({
+        dept: opts.dept,
+        dim: opts.dim,
+        include_comparison: opts.includeComparison ? 1 : undefined,
+      })}`,
     ),
   metricDetail: (
     metricKey: string,

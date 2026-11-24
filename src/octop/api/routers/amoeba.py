@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Literal, cast
+from typing import Annotated, Any, Literal, cast
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Form, Query, Request, Response, UploadFile
 from pydantic import BaseModel, Field
 
 from octop.api.deps import current_user, get_server, require_admin, require_permission
@@ -15,6 +16,7 @@ from octop.infra.amoeba.aggregate import (
     build_leaf_wall,
     build_metric_detail,
     build_overview,
+    build_unit_comparison,
     resolve_asof,
 )
 from octop.infra.amoeba.builtin_metrics import ensure_builtin_metrics
@@ -25,7 +27,14 @@ from octop.infra.amoeba.settings_store import (
     DEFAULT_SYNC_SCHEDULE,
     AmoebaSourceSettingsStore,
 )
+from octop.infra.amoeba.shared_boards import (
+    MAX_HTML_BYTES,
+    BoardVisibility,
+    SharedBoard,
+    SharedBoardStore,
+)
 from octop.infra.errors import ErrorCode, OctopError
+from octop.infra.users.groups import GroupAccess
 from octop.infra.utils.locale import resolve_request_locale
 
 router = APIRouter()
@@ -93,6 +102,183 @@ def _soft_host_models(server: Any) -> Any:
 # ---- board reads ---------------------------------------------------------
 
 
+class SharedBoardResponse(BaseModel):
+    id: str
+    filename: str
+    created_at: int
+    can_withdraw: bool
+    visibility: BoardVisibility
+    group_ids: tuple[str, ...]
+
+
+class SharedBoardAudience(BaseModel):
+    visibility: BoardVisibility
+    group_ids: list[str] = Field(default_factory=list)
+
+
+class SharedBoardGroup(BaseModel):
+    id: str
+    name: str
+
+
+def _shared_board_store(server: Any) -> SharedBoardStore:
+    return SharedBoardStore(server.services.paths.root / "amoeba-shared-boards")
+
+
+def _shared_board_response(board: SharedBoard, user: Any) -> SharedBoardResponse:
+    return SharedBoardResponse(
+        id=board.id,
+        filename=board.filename,
+        created_at=board.created_at,
+        can_withdraw=user.is_admin or board.owner_id == user.id,
+        visibility=board.visibility,
+        group_ids=board.group_ids if board.owner_id == user.id else (),
+    )
+
+
+def _active_board_groups(server: Any, user_id: int) -> set[str]:
+    repos = server.services.repos
+    memberships = repos.user_group_member_repo.group_ids_for_user(user_id)
+    return {
+        group.user_group_id
+        for group in repos.user_group_repo.list_all()
+        if group.enabled and group.user_group_id in memberships
+    }
+
+
+@router.get("/shared-boards/groups", summary="List shareable user groups")
+async def list_shared_board_groups(
+    _: Any = Depends(require_permission("amoeba")),
+    server: Any = Depends(get_server),
+) -> list[SharedBoardGroup]:
+    groups = await _run(server.services.repos.user_group_repo.list_all)
+    return [
+        SharedBoardGroup(id=group.user_group_id, name=group.name)
+        for group in groups
+        if group.enabled
+    ]
+
+
+@router.get("/shared-boards", summary="List static dashboards visible to the caller")
+async def list_shared_boards(
+    mine: bool = Query(
+        False, description="Include only the caller's dashboards, including private ones"
+    ),
+    user: Any = Depends(current_user),
+    _: Any = Depends(require_permission("amoeba")),
+    server: Any = Depends(get_server),
+) -> list[SharedBoardResponse]:
+    boards = await _run(_shared_board_store(server).list)
+    if mine:
+        return [
+            _shared_board_response(board, user) for board in boards if board.owner_id == user.id
+        ]
+    groups = await _run(_active_board_groups, server, user.id)
+    return [
+        _shared_board_response(board, user) for board in boards if board.visible_to(user.id, groups)
+    ]
+
+
+@router.post("/shared-boards", status_code=201, summary="Share a static HTML dashboard")
+async def publish_shared_board(
+    file: UploadFile,
+    visibility: Annotated[BoardVisibility, Form()] = "all",
+    group_ids: Annotated[list[str] | None, Form()] = None,
+    user: Any = Depends(current_user),
+    _: Any = Depends(require_permission("amoeba")),
+    server: Any = Depends(get_server),
+) -> SharedBoardResponse:
+    """Save a UTF-8 HTML snapshot. Omitted visibility preserves the legacy shared default."""
+    access = GroupAccess(server.services.repos)
+    groups = await _run(access.validate_visibility, visibility, group_ids)
+    content = await file.read(MAX_HTML_BYTES + 1)
+    board = await _run(
+        _shared_board_store(server).create,
+        file.filename or "",
+        content,
+        user.id,
+        visibility,
+        tuple(groups),
+    )
+    return _shared_board_response(board, user)
+
+
+@router.get(
+    "/shared-boards/{board_id}",
+    summary="Read a shared dashboard snapshot",
+    response_class=Response,
+    responses={200: {"content": {"application/octet-stream": {}}}},
+)
+async def read_shared_board(
+    board_id: UUID,
+    user: Any = Depends(require_permission("amoeba")),
+    server: Any = Depends(get_server),
+) -> Response:
+    groups = await _run(_active_board_groups, server, user.id)
+    content = await _run(_shared_board_store(server).read, board_id, user_id=user.id, groups=groups)
+    return Response(
+        content=content,
+        media_type="application/octet-stream",
+        headers={
+            "Content-Disposition": 'attachment; filename="dashboard.html"',
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@router.put("/shared-boards/{board_id}/file", summary="Replace a dashboard's HTML")
+async def replace_shared_board_file(
+    board_id: UUID,
+    file: UploadFile,
+    user: Any = Depends(require_permission("amoeba")),
+    server: Any = Depends(get_server),
+) -> SharedBoardResponse:
+    """Replace an owned dashboard's file while keeping its identity and audience."""
+    content = await file.read(MAX_HTML_BYTES + 1)
+    store = _shared_board_store(server)
+    await _run(store.replace_html, board_id, user.id, file.filename or "", content)
+    board = await _run(store.get, board_id)
+    return _shared_board_response(board, user)
+
+
+@router.patch("/shared-boards/{board_id}", summary="Change a dashboard's sharing audience")
+async def update_shared_board_audience(
+    board_id: UUID,
+    body: SharedBoardAudience,
+    user: Any = Depends(require_permission("amoeba")),
+    server: Any = Depends(get_server),
+) -> SharedBoardResponse:
+    access = GroupAccess(server.services.repos)
+    groups = await _run(access.validate_visibility, body.visibility, body.group_ids)
+    board = await _run(
+        _shared_board_store(server).set_visibility,
+        board_id,
+        user.id,
+        body.visibility,
+        tuple(groups),
+    )
+    return _shared_board_response(board, user)
+
+
+@router.delete("/shared-boards/{board_id}", status_code=204, summary="Withdraw a shared dashboard")
+async def withdraw_shared_board(
+    board_id: UUID,
+    user: Any = Depends(current_user),
+    _: Any = Depends(require_permission("amoeba")),
+    server: Any = Depends(get_server),
+) -> Response:
+    groups = await _run(_active_board_groups, server, user.id) if user.is_admin else set()
+    await _run(
+        _shared_board_store(server).remove,
+        board_id,
+        user_id=user.id,
+        admin=user.is_admin,
+        groups=groups,
+    )
+    return Response(status_code=204)
+
+
 @router.get("/tree", summary="List departments visible to the board")
 async def get_tree(
     user: Any = Depends(current_user),
@@ -119,11 +305,12 @@ async def get_tree(
 @router.get(
     "/overview",
     summary="Board payload for one department scope",
-    description="Rolled-up KPI cards for the department subtree; `dept` omitted means the user's whole visible scope.",
+    description="Rolled-up KPI cards for the visible department scope, with an optional core-metric comparison of reporting units.",
 )
 async def get_overview(
     dept: str | None = Query(default=None, description="Department id to drill into"),
     dim: Literal["d", "m", "y"] = Query(default="d"),
+    include_comparison: bool = Query(default=False, description="Include core metrics by unit"),
     user: Any = Depends(current_user),
     _: Any = Depends(require_permission("amoeba")),
     server: Any = Depends(get_server),
@@ -141,6 +328,17 @@ async def get_overview(
     overview = await _run(
         build_overview, repo, department_ids=scope, metrics=metrics, asof=asof, dim=dim
     )
+    if include_comparison:
+        overview["comparison"] = await _run(
+            build_unit_comparison,
+            repo,
+            department_ids=scope,
+            departments=departments,
+            department_id=dept,
+            metrics=metrics,
+            asof=asof,
+            dim=dim,
+        )
     return cast(dict[str, Any], overview)
 
 

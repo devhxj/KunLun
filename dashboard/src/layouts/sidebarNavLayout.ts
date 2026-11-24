@@ -114,7 +114,18 @@ export function editorFromCatalog(
     }
   }
   for (const key of defaultKeyOrder(base)) {
-    if (!seen.has(key)) hidden.push(key);
+    if (seen.has(key)) continue;
+    // Make the new management page discoverable in layouts saved before it existed.
+    if (key === "my-static-boards") {
+      const boardIndex = ungrouped.indexOf("amoeba");
+      ungrouped.splice(
+        boardIndex < 0 ? ungrouped.length : boardIndex + 1,
+        0,
+        key,
+      );
+    } else {
+      hidden.push(key);
+    }
   }
   return { groups, ungrouped, itemsByGroup, hidden };
 }

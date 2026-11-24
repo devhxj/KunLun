@@ -337,7 +337,11 @@ export function pathPermissionKeys(pathname: string): PermissionKeys | null {
   if (pathname === "/token-usage" || pathname.startsWith("/token-usage/")) {
     return PERM.tokenUsage;
   }
-  if (pathname === "/amoeba" || pathname.startsWith("/amoeba/")) {
+  if (
+    pathname === "/my-static-boards" ||
+    pathname === "/amoeba" ||
+    pathname.startsWith("/amoeba/")
+  ) {
     return PERM.amoeba;
   }
   return null;

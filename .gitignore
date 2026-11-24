@@ -124,3 +124,5 @@ scripts/lh_image_install_octop_tencentos.sh
 .tmp-mfa/
 .tmp-mfa-e2e/
 
+阿米巴看板demo/
+.demo-octop-home/

@@ -27,6 +27,7 @@ SIDEBAR_NAV_KEYS = frozenset(
         "tasks",
         "token-usage",
         "amoeba",
+        "my-static-boards",
         "personalization",
         "channels",
         "connectors",
